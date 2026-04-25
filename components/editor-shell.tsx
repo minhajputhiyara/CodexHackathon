@@ -278,10 +278,14 @@ export function EditorShell() {
       {/* Top Bar */}
       <div className="fixed left-0 right-0 top-0 z-50 flex h-12 items-center justify-between border-b border-[#2a2a2a] bg-[#0a0a0a] px-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#8b5cf6]">
-            <PanelsTopLeft className="h-5 w-5 text-white" strokeWidth={2} />
-          </div>
-          <span className="text-sm font-medium">Untitled Project</span>
+          <img src="/logo.png" alt="designplate" className="h-8 w-8 rounded-md" />
+          <button
+            onClick={() => setIsEditingTitle(true)}
+            className="rounded px-2 py-1 text-lg font-bold transition hover:bg-[#1f1f1f]"
+          >
+            <span className="text-white">design</span>
+            <span className="bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] bg-clip-text text-transparent">plate</span>
+          </button>
           <span className="rounded bg-[#1f1f1f] px-2 py-0.5 text-xs text-gray-400">Autosaved</span>
         </div>
 
@@ -501,11 +505,12 @@ function AuthPanel({
       <div className="flex flex-1 items-center justify-center px-6 py-10">
         <div className="w-full max-w-sm">
           <div className="mb-8 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#8b5cf6]">
-              <PanelsTopLeft className="h-6 w-6 text-white" strokeWidth={2} />
-            </div>
+            <img src="/logo.png" alt="designplate" className="h-12 w-auto rounded-md" />
             <div>
-              <h1 className="text-xl font-semibold">designPlate</h1>
+              <h1 className="text-2xl font-bold">
+                <span className="text-white">design</span>
+                <span className="bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] bg-clip-text text-transparent">plate</span>
+              </h1>
               <p className="text-sm text-gray-400">Sign in to open your projects.</p>
             </div>
           </div>
