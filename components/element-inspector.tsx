@@ -42,8 +42,8 @@ export function ElementInspector({
   if (!selectedPage) {
     return (
       <div>
-        <h2 className="text-sm font-semibold text-slate-900">Inspector</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
+        <h2 className="text-sm font-semibold text-white">Inspector</h2>
+        <p className="mt-2 text-sm leading-6 text-gray-400">
           Select a page frame or page from the list to inspect it.
         </p>
       </div>
@@ -53,32 +53,38 @@ export function ElementInspector({
   if (!selectedNode) {
     return (
       <div>
-        <h2 className="text-sm font-semibold text-slate-900">Inspector</h2>
-        <div className="mt-4 space-y-4">
+        <h2 className="mb-4 text-sm font-semibold text-white">Page Settings</h2>
+        <div className="space-y-4">
           <label className="block">
-            <span className="text-xs font-semibold uppercase text-slate-500">
+            <span className="mb-2 block text-xs font-medium text-gray-400">
+              ID
+            </span>
+            <input
+              className="w-full rounded-md border border-[#2a2a2a] bg-[#141414] px-3 py-2 text-sm text-white outline-none transition focus:border-[#8b5cf6]"
+              value={selectedPage.id}
+              disabled
+            />
+          </label>
+          <label className="block">
+            <span className="mb-2 block text-xs font-medium text-gray-400">
               Page name
             </span>
             <input
-              className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+              className="w-full rounded-md border border-[#2a2a2a] bg-[#141414] px-3 py-2 text-sm text-white outline-none transition focus:border-[#8b5cf6]"
               onChange={(event) => onPageChange({ name: event.target.value })}
               value={selectedPage.name}
             />
           </label>
           <label className="block">
-            <span className="text-xs font-semibold uppercase text-slate-500">
+            <span className="mb-2 block text-xs font-medium text-gray-400">
               Route
             </span>
             <input
-              className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+              className="w-full rounded-md border border-[#2a2a2a] bg-[#141414] px-3 py-2 text-sm text-white outline-none transition focus:border-[#8b5cf6]"
               onChange={(event) => onPageChange({ route: event.target.value })}
               value={selectedPage.route}
             />
           </label>
-          <p className="text-sm leading-6 text-slate-600">
-            Select an element inside this page frame to edit text and Tailwind
-            classes.
-          </p>
         </div>
       </div>
     );
@@ -89,21 +95,32 @@ export function ElementInspector({
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-slate-900">Inspector</h2>
-        <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600">
-          {selectedPage.name} / {selectedNode.type}
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold text-white">Element</h2>
+        <span className="rounded-md bg-[#141414] px-2 py-1 text-xs font-medium text-gray-400">
+          {selectedNode.type}
         </span>
       </div>
 
-      <div className="mt-4 space-y-4">
+      <div className="space-y-4">
+        <label className="block">
+          <span className="mb-2 block text-xs font-medium text-gray-400">
+            ID
+          </span>
+          <input
+            className="w-full rounded-md border border-[#2a2a2a] bg-[#141414] px-3 py-2 text-sm text-white outline-none"
+            value={selectedNode.id}
+            disabled
+          />
+        </label>
+
         {supportsText ? (
           <label className="block">
-            <span className="text-xs font-semibold uppercase text-slate-500">
+            <span className="mb-2 block text-xs font-medium text-gray-400">
               Text
             </span>
             <textarea
-              className="mt-2 min-h-24 w-full resize-none rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+              className="min-h-24 w-full resize-none rounded-md border border-[#2a2a2a] bg-[#141414] px-3 py-2 text-sm text-white outline-none transition focus:border-[#8b5cf6]"
               onChange={(event) =>
                 onElementChange({ text: event.target.value })
               }
@@ -113,11 +130,11 @@ export function ElementInspector({
         ) : null}
 
         <label className="block">
-          <span className="text-xs font-semibold uppercase text-slate-500">
+          <span className="mb-2 block text-xs font-medium text-gray-400">
             Tailwind classes
           </span>
           <textarea
-            className="mt-2 min-h-32 w-full resize-none rounded-md border border-slate-300 px-3 py-2 font-mono text-xs leading-5 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+            className="min-h-32 w-full resize-none rounded-md border border-[#2a2a2a] bg-[#141414] px-3 py-2 font-mono text-xs leading-5 text-white outline-none transition focus:border-[#8b5cf6]"
             onChange={(event) =>
               onElementChange({ className: event.target.value })
             }
@@ -126,13 +143,13 @@ export function ElementInspector({
         </label>
 
         <div>
-          <span className="text-xs font-semibold uppercase text-slate-500">
-            Presets
+          <span className="mb-2 block text-xs font-medium text-gray-400">
+            Style Presets
           </span>
-          <div className="mt-2 grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {classPresets.map((preset) => (
               <button
-                className="rounded-md border border-slate-300 px-2 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                className="rounded-md border border-[#2a2a2a] bg-[#141414] px-2 py-2 text-xs font-medium text-gray-300 transition hover:bg-[#1f1f1f]"
                 key={preset.label}
                 onClick={() => onElementChange({ className: preset.value })}
                 type="button"

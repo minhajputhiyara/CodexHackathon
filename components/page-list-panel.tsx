@@ -14,42 +14,29 @@ export function PageListPanel({
   onSelectPage,
 }: PageListPanelProps) {
   return (
-    <section className="rounded-md border border-slate-200 bg-white p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h2 className="text-sm font-semibold text-slate-900">Pages</h2>
-          <p className="mt-1 text-xs text-slate-500">
-            {project.pages.length} page workspace
-          </p>
-        </div>
-      </div>
+    <div className="flex items-center gap-2 overflow-x-auto">
+      {project.pages.map((page) => {
+        const isSelected = page.id === selectedPageId;
 
-      <div className="mt-3 space-y-2">
-        {project.pages.map((page) => {
-          const isSelected = page.id === selectedPageId;
-
-          return (
-            <button
-              className={`w-full rounded-md border px-3 py-2 text-left transition ${
-                isSelected
-                  ? "border-teal-600 bg-teal-50"
-                  : "border-slate-200 bg-white hover:bg-slate-50"
-              }`}
-              key={page.id}
-              onClick={() => onSelectPage(page.id)}
-              type="button"
-            >
-              <span className="block text-sm font-semibold text-slate-900">
-                {page.name}
-              </span>
-              <span className="mt-1 block text-xs text-slate-500">
-                {page.route}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </section>
+        return (
+          <button
+            className={`shrink-0 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+              isSelected
+                ? "bg-[#8b5cf6] text-white"
+                : "bg-[#141414] text-gray-400 hover:bg-[#1f1f1f] hover:text-white"
+            }`}
+            key={page.id}
+            onClick={() => onSelectPage(page.id)}
+            type="button"
+          >
+            {page.name}
+          </button>
+        );
+      })}
+      <button className="shrink-0 rounded-md bg-[#141414] px-3 py-1.5 text-sm text-gray-400 transition hover:bg-[#1f1f1f] hover:text-white">
+        + Add Page
+      </button>
+    </div>
   );
 }
 
