@@ -26,6 +26,7 @@ export function LayersPanel({
 }: LayersPanelProps) {
   const [activeTab, setActiveTab] = useState<"layers" | "source">("layers");
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
   const selectedPage = project.pages.find((p) => p.id === selectedPageId);
 
   const toggleNode = (nodeId: string) => {
@@ -40,17 +41,58 @@ export function LayersPanel({
     });
   };
 
+  const matchesSearch = (node: UIElementNode, query: string): boolean => {
+    if (!query) return true;
+    
+    const lowerQuery = query.toLowerCase();
+    
+    // Check if node type matches
+    if (node.type.toLowerCase().includes(lowerQuery)) return true;
+    
+    // Check if text content matches
+    if (node.props?.text && String(node.props.text).toLowerCase().includes(lowerQuery)) return true;
+    
+    // Check if any child matches
+    if (node.children) {
+      return node.children.some(child => matchesSearch(child, query));
+    }
+    
+    return false;
+  };
+
+  const filterNode = (node: UIElementNode, query: string): UIElementNode | null => {
+    if (!query) return node;
+    
+    const nodeMatches = node.type.toLowerCase().includes(query.toLowerCase()) ||
+      (node.props?.text && String(node.props.text).toLowerCase().includes(query.toLowerCase()));
+    
+    if (node.children) {
+      const filteredChildren = node.children
+        .map(child => filterNode(child, query))
+        .filter((child): child is UIElementNode => child !== null);
+      
+      if (nodeMatches || filteredChildren.length > 0) {
+        return {
+          ...node,
+          children: filteredChildren.length > 0 ? filteredChildren : node.children,
+        };
+      }
+    }
+    
+    return nodeMatches ? node : null;
+  };
+
   const renderNode = (node: UIElementNode, depth = 0): React.ReactNode => {
     const isSelected = node.id === selectedElementId;
     const isHovered = node.id === hoveredElementId;
     const hasChildren = node.children && node.children.length > 0;
-    const isExpanded = expandedNodes.has(node.id);
+    const isExpanded = searchQuery ? true : expandedNodes.has(node.id);
 
     return (
       <div key={node.id}>
         <div
           onClick={() => {
-            if (hasChildren) {
+            if (hasChildren && !searchQuery) {
               toggleNode(node.id);
             }
             if (selectedPageId) {
@@ -59,7 +101,7 @@ export function LayersPanel({
           }}
           onPointerEnter={() => onHoverElement?.(node.id)}
           onPointerLeave={() => onHoverElement?.(null)}
-          className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition ${
+          className={`flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition ${
             isSelected
               ? "bg-[#8b5cf6] text-white"
               : isHovered
@@ -137,8 +179,20 @@ export function LayersPanel({
           <input
             type="text"
             placeholder="Search layers..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-gray-500"
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="text-gray-400 hover:text-white"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 
@@ -149,7 +203,14 @@ export function LayersPanel({
             <div className="mb-2 px-2 text-xs font-medium text-gray-400">
               {selectedPage.name}
             </div>
-            {renderNode(selectedPage.tree)}
+            {(() => {
+              const filteredTree = filterNode(selectedPage.tree, searchQuery);
+              return filteredTree ? renderNode(filteredTree) : (
+                <div className="flex h-32 items-center justify-center text-sm text-gray-500">
+                  No matching layers
+                </div>
+              );
+            })()}
           </div>
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-gray-500">
