@@ -115,6 +115,47 @@ export function EditorShell() {
   const [activeTab, setActiveTab] = useState<"design" | "advanced">("design");
   const [projectTitle, setProjectTitle] = useState("Untitled Project");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [rightSidebarWidth, setRightSidebarWidth] = useState(384); // 96 * 4 = 384px (w-96)
+  const [isResizing, setIsResizing] = useState(false);
+  const [leftSidebarWidth, setLeftSidebarWidth] = useState(256); // 64 * 4 = 256px (w-64)
+  const [isResizingLeft, setIsResizingLeft] = useState(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isResizing) {
+        const newWidth = window.innerWidth - e.clientX;
+        // Min width: 320px, Max width: 600px
+        const clampedWidth = Math.min(Math.max(newWidth, 320), 600);
+        setRightSidebarWidth(clampedWidth);
+      }
+      
+      if (isResizingLeft) {
+        const newWidth = e.clientX;
+        // Min width: 200px, Max width: 500px
+        const clampedWidth = Math.min(Math.max(newWidth, 200), 500);
+        setLeftSidebarWidth(clampedWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      setIsResizingLeft(false);
+    };
+
+    if (isResizing || isResizingLeft) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [isResizing, isResizingLeft]);
   const skipNextSaveRef = useRef(false);
 
   const selectedPage = useMemo(
@@ -595,7 +636,10 @@ export function EditorShell() {
       {/* Main Content */}
       <div className="mt-12 flex w-full">
         {/* Left Sidebar - Layers */}
-        <div className="w-64 border-r border-[#2a2a2a]">
+        <div 
+          className="relative border-r border-[#2a2a2a]"
+          style={{ width: `${leftSidebarWidth}px` }}
+        >
           <LayersPanel
             hoveredElementId={hoveredElementId}
             onHoverElement={setHoveredElementId}
@@ -603,6 +647,13 @@ export function EditorShell() {
             project={project}
             selectedElementId={selectedElementId}
             selectedPageId={selectedPageId}
+          />
+          
+          {/* Resize Handle */}
+          <div
+            onMouseDown={() => setIsResizingLeft(true)}
+            className="absolute right-0 top-0 z-10 h-full w-1 cursor-col-resize hover:bg-[#8b5cf6] active:bg-[#8b5cf6]"
+            style={{ marginRight: "-2px" }}
           />
         </div>
 
@@ -640,7 +691,17 @@ export function EditorShell() {
         </div>
 
         {/* Right Sidebar - Chat & Properties */}
-        <div className="flex w-96 flex-col border-l border-[#2a2a2a]">
+        <div 
+          className="relative flex flex-col border-l border-[#2a2a2a]"
+          style={{ width: `${rightSidebarWidth}px` }}
+        >
+          {/* Resize Handle */}
+          <div
+            onMouseDown={() => setIsResizing(true)}
+            className="absolute left-0 top-0 z-10 h-full w-1 cursor-col-resize hover:bg-[#8b5cf6] active:bg-[#8b5cf6]"
+            style={{ marginLeft: "-2px" }}
+          />
+          
           {/* Tabs */}
           <div className="flex border-b border-[#2a2a2a]">
             <button
