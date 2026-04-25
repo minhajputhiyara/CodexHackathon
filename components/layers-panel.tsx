@@ -13,7 +13,6 @@ interface LayersPanelProps {
   onAddElement?: (elementType: string) => void;
   onSelectElement: (pageId: string, elementId: string) => void;
   onHoverElement?: (elementId: string | null) => void;
-  onAddElement?: (elementType: string) => void;
 }
 
 export function LayersPanel({
@@ -24,7 +23,6 @@ export function LayersPanel({
   onAddElement,
   onSelectElement,
   onHoverElement,
-  onAddElement,
 }: LayersPanelProps) {
   const [activeTab, setActiveTab] = useState<"layers" | "source">("layers");
   const selectedPage = project.pages.find((p) => p.id === selectedPageId);
