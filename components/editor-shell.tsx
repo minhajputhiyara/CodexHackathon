@@ -119,6 +119,7 @@ export function EditorShell() {
   const [isResizing, setIsResizing] = useState(false);
   const [leftSidebarWidth, setLeftSidebarWidth] = useState(256); // 64 * 4 = 256px (w-64)
   const [isResizingLeft, setIsResizingLeft] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -620,16 +621,38 @@ export function EditorShell() {
             Projects
           </button>
           <ExportDropdown project={project} selectedPageId={selectedPageId} />
-          <button
-            className="ml-2 flex h-8 items-center gap-2 rounded-full bg-[#1f1f1f] pl-1 pr-3 text-sm text-gray-300 transition hover:bg-[#262626] hover:text-white"
-            onClick={logout}
-            type="button"
-          >
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#8b5cf6] text-xs font-medium text-white">
+          
+          {/* Profile Dropdown */}
+          <div className="relative ml-2">
+            <button
+              onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#8b5cf6] text-sm font-medium text-white transition hover:bg-[#7c3aed]"
+              type="button"
+            >
               {authUser?.name.charAt(0).toUpperCase() ?? "U"}
-            </span>
-            Sign out
-          </button>
+            </button>
+
+            {showProfileDropdown && (
+              <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-md border border-[#2a2a2a] bg-[#141414] py-1 shadow-lg">
+                <div className="border-b border-[#2a2a2a] px-4 py-3">
+                  <div className="text-sm font-medium text-white">{authUser?.name}</div>
+                  <div className="text-xs text-gray-400">{authUser?.email}</div>
+                </div>
+                <button
+                  onClick={() => {
+                    logout();
+                    setShowProfileDropdown(false);
+                  }}
+                  className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-300 transition hover:bg-[#1f1f1f] hover:text-white"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

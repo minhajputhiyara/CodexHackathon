@@ -14,8 +14,10 @@ interface Chat {
   messages: Message[];
 }
 
+type AIModel = "auto" | "openai-gpt4" | "anthropic-sonnet" | "anthropic-sonnet-4" | "anthropic-haiku" | "gemini-pro";
+
 interface AIChatPanelProps {
-  onGenerate: (prompt: string) => void;
+  onGenerate: (prompt: string, model?: AIModel) => void;
   isGenerating: boolean;
   demoPrompts: readonly string[];
 }
@@ -36,8 +38,50 @@ export function AIChatPanel({ onGenerate, isGenerating, demoPrompts }: AIChatPan
   ]);
   const [activeChat, setActiveChat] = useState("1");
   const [input, setInput] = useState("");
+  const [selectedModel, setSelectedModel] = useState<AIModel>("auto");
+  const [showModelDropdown, setShowModelDropdown] = useState(false);
+
+  const models = [
+    { 
+      id: "auto" as const, 
+      name: "Auto", 
+      description: "Models chosen by task for optimal usage and consistent quality",
+      credit: "1x Credit"
+    },
+    { 
+      id: "openai-gpt4" as const, 
+      name: "GPT-4 Turbo", 
+      description: "OpenAI's most capable model for complex tasks",
+      credit: "2x Credit"
+    },
+    { 
+      id: "anthropic-sonnet" as const, 
+      name: "Claude Sonnet 4.5", 
+      description: "The Claude Sonnet 4.5 model",
+      credit: "1.3x Credit"
+    },
+    { 
+      id: "anthropic-sonnet-4" as const, 
+      name: "Claude Sonnet 4", 
+      description: "Hybrid reasoning and coding for regular use",
+      credit: "1.3x Credit"
+    },
+    { 
+      id: "anthropic-haiku" as const, 
+      name: "Claude Haiku 4.5", 
+      description: "The latest Claude Haiku model",
+      credit: "0.4x Credit"
+    },
+    { 
+      id: "gemini-pro" as const, 
+      name: "Gemini Pro", 
+      description: "Google's advanced AI model",
+      credit: "1x Credit"
+    },
+  ];
 
   const currentChat = chats.find((c) => c.id === activeChat);
+  const currentModel = models.find((m) => m.id === selectedModel) || models[0];
 
   const createNewChat = () => {
     const newChat: Chat = {
@@ -84,7 +128,7 @@ export function AIChatPanel({ onGenerate, isGenerating, demoPrompts }: AIChatPan
       )
     );
 
-    onGenerate(input);
+    onGenerate(input, selectedModel);
     setInput("");
 
     // Simulate assistant response
@@ -218,6 +262,53 @@ export function AIChatPanel({ onGenerate, isGenerating, demoPrompts }: AIChatPan
           />
           <div className="flex items-center justify-between border-t border-[#2a2a2a] px-3 py-2">
             <div className="flex items-center gap-2">
+              {/* Model Selector */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowModelDropdown(!showModelDropdown)}
+                  className="flex items-center gap-2 rounded-md border border-[#2a2a2a] bg-[#1f1f1f] px-3 py-1.5 text-xs text-gray-300 transition hover:bg-[#262626]"
+                >
+                  <span className="font-medium">{currentModel?.name}</span>
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {showModelDropdown && (
+                  <div className="absolute bottom-full left-0 mb-2 w-80 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] py-2 shadow-xl">
+                    {models.map((model, index) => (
+                      <div key={model.id}>
+                        {index > 0 && <div className="my-1 h-px bg-[#2a2a2a]" />}
+                        <button
+                          onClick={() => {
+                            setSelectedModel(model.id);
+                            setShowModelDropdown(false);
+                          }}
+                          className={`flex w-full items-start gap-3 px-4 py-3 text-left transition hover:bg-[#252525] ${
+                            selectedModel === model.id ? "bg-[#252525]" : ""
+                          }`}
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <span className="font-semibold text-white">{model.name}</span>
+                              <span className="text-xs text-blue-400">{model.credit}</span>
+                            </div>
+                            <p className="mt-1 text-xs leading-relaxed text-gray-400">
+                              {model.description}
+                            </p>
+                          </div>
+                          {selectedModel === model.id && (
+                            <svg className="mt-1 h-4 w-4 shrink-0 text-[#8b5cf6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <button className="rounded p-1 text-gray-400 transition hover:bg-[#1f1f1f] hover:text-white">
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
