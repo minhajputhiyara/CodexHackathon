@@ -10,6 +10,7 @@ interface LayersPanelProps {
   selectedPageId: string | null;
   selectedElementId: string | null;
   hoveredElementId?: string | null;
+  onAddElement?: (elementType: string) => void;
   onSelectElement: (pageId: string, elementId: string) => void;
   onHoverElement?: (elementId: string | null) => void;
   onAddElement?: (elementType: string) => void;
@@ -20,6 +21,7 @@ export function LayersPanel({
   selectedPageId,
   selectedElementId,
   hoveredElementId,
+  onAddElement,
   onSelectElement,
   onHoverElement,
   onAddElement,
