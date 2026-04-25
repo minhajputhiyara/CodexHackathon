@@ -1,4 +1,5 @@
 import type { UIElementNode } from "@/lib/ui-schema";
+import type { WebsiteProject, WebsitePage } from "@/lib/website-project-schema";
 
 const tagByType: Record<UIElementNode["type"], string> = {
   section: "section",
@@ -79,3 +80,27 @@ export function exportJsx(tree: UIElementNode) {
   ].join("\n");
 }
 
+function componentNameFromPage(page: WebsitePage) {
+  const words = page.name.match(/[a-z0-9]+/gi) ?? ["Generated"];
+  return `${words
+    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
+    .join("")}Page`;
+}
+
+export function exportPageJsx(page: WebsitePage) {
+  return exportJsx(page.tree).replace(
+    "GeneratedUI",
+    componentNameFromPage(page),
+  );
+}
+
+export function exportProjectJsx(project: WebsiteProject) {
+  return project.pages
+    .map(
+      (page) =>
+        `// ${page.name} (${page.route})\n// ${componentNameFromPage(
+          page,
+        )}.tsx\n${exportPageJsx(page)}`,
+    )
+    .join("\n\n");
+}

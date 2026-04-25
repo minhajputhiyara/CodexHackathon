@@ -1,16 +1,29 @@
 import { NextResponse } from "next/server";
 import { normalizeUiTree, parseJsonFromText } from "@/lib/normalize-ui-tree";
-import { sampleUiTree } from "@/lib/sample-ui";
+import { normalizeWebsiteProject } from "@/lib/normalize-website-project";
+import { sampleWebsiteProject } from "@/lib/sample-website-project";
 
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const MODEL = "gpt-4.1-mini";
 
 const instructions = `
-You generate JSON UI trees for UIForge, an AI-native React and Tailwind UI canvas.
+You generate JSON website projects for UIForge, an AI-native React and Tailwind UI canvas.
 
 Return JSON only. Do not wrap the response in Markdown.
 
-Allowed node shape:
+Project shape:
+{
+  "name": "Website name",
+  "pages": [
+    {
+      "name": "Home",
+      "route": "/",
+      "tree": {}
+    }
+  ]
+}
+
+Allowed UI node shape:
 {
   "type": "section" | "container" | "text" | "button" | "image" | "card" | "stack",
   "props": {
@@ -28,8 +41,10 @@ Rules:
 - Do not include HTML strings, scripts, JavaScript event handlers, style objects, custom CSS, or external dependencies.
 - Keep the UI simple and demo-friendly.
 - Prefer section/container/stack/card/text/button.
-- Make the root node a section.
-- Keep the tree under 40 nodes.
+- Make every page tree root node a section.
+- Return 3 to 5 pages when the prompt asks for a website.
+- Routes must start with "/".
+- Keep each page tree under 40 nodes.
 `;
 
 type GenerateRequest = {
@@ -39,7 +54,7 @@ type GenerateRequest = {
 function fallbackResponse(message: string, status = 200) {
   return NextResponse.json(
     {
-      tree: sampleUiTree,
+      project: sampleWebsiteProject,
       fallback: true,
       message,
     },
@@ -137,21 +152,38 @@ export async function POST(request: Request) {
     }
 
     const parsed = parseJsonFromText(outputText);
-    const normalized = normalizeUiTree(parsed);
+    const normalizedProject = normalizeWebsiteProject(parsed);
 
-    if (!normalized.ok) {
+    if (!normalizedProject.ok) {
+      const normalizedTree = normalizeUiTree(parsed);
+
+      if (normalizedTree.ok) {
+        return NextResponse.json({
+          project: {
+            ...sampleWebsiteProject,
+            pages: [
+              {
+                ...sampleWebsiteProject.pages[0],
+                tree: normalizedTree.tree,
+              },
+            ],
+          },
+          fallback: false,
+          message: "Generated single-page UI.",
+        });
+      }
+
       return fallbackResponse(
-        `${normalized.error} Loaded the sample UI instead.`,
+        `${normalizedProject.error} Loaded the sample website instead.`,
       );
     }
 
     return NextResponse.json({
-      tree: normalized.tree,
+      project: normalizedProject.project,
       fallback: false,
-      message: "Generated UI.",
+      message: "Generated website.",
     });
   } catch {
     return fallbackResponse("Could not generate UI. Loaded the sample UI instead.");
   }
 }
-

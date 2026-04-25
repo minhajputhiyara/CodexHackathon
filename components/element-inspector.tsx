@@ -1,10 +1,13 @@
 "use client";
 
 import type { UIElementNode, UIElementProps } from "@/lib/ui-schema";
+import type { WebsitePage } from "@/lib/website-project-schema";
 
 type ElementInspectorProps = {
+  selectedPage: WebsitePage | null;
   selectedNode: UIElementNode | null;
-  onChange: (props: Partial<UIElementProps>) => void;
+  onElementChange: (props: Partial<UIElementProps>) => void;
+  onPageChange: (patch: Partial<Pick<WebsitePage, "name" | "route">>) => void;
 };
 
 const classPresets = [
@@ -31,16 +34,52 @@ const classPresets = [
 ];
 
 export function ElementInspector({
+  selectedPage,
   selectedNode,
-  onChange,
+  onElementChange,
+  onPageChange,
 }: ElementInspectorProps) {
-  if (!selectedNode) {
+  if (!selectedPage) {
     return (
       <div>
         <h2 className="text-sm font-semibold text-slate-900">Inspector</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Select an element on the canvas to edit its text and Tailwind classes.
+          Select a page frame or page from the list to inspect it.
         </p>
+      </div>
+    );
+  }
+
+  if (!selectedNode) {
+    return (
+      <div>
+        <h2 className="text-sm font-semibold text-slate-900">Inspector</h2>
+        <div className="mt-4 space-y-4">
+          <label className="block">
+            <span className="text-xs font-semibold uppercase text-slate-500">
+              Page name
+            </span>
+            <input
+              className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+              onChange={(event) => onPageChange({ name: event.target.value })}
+              value={selectedPage.name}
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-semibold uppercase text-slate-500">
+              Route
+            </span>
+            <input
+              className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+              onChange={(event) => onPageChange({ route: event.target.value })}
+              value={selectedPage.route}
+            />
+          </label>
+          <p className="text-sm leading-6 text-slate-600">
+            Select an element inside this page frame to edit text and Tailwind
+            classes.
+          </p>
+        </div>
       </div>
     );
   }
@@ -53,7 +92,7 @@ export function ElementInspector({
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-sm font-semibold text-slate-900">Inspector</h2>
         <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600">
-          {selectedNode.type}
+          {selectedPage.name} / {selectedNode.type}
         </span>
       </div>
 
@@ -65,7 +104,9 @@ export function ElementInspector({
             </span>
             <textarea
               className="mt-2 min-h-24 w-full resize-none rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
-              onChange={(event) => onChange({ text: event.target.value })}
+              onChange={(event) =>
+                onElementChange({ text: event.target.value })
+              }
               value={selectedNode.props.text ?? ""}
             />
           </label>
@@ -77,7 +118,9 @@ export function ElementInspector({
           </span>
           <textarea
             className="mt-2 min-h-32 w-full resize-none rounded-md border border-slate-300 px-3 py-2 font-mono text-xs leading-5 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
-            onChange={(event) => onChange({ className: event.target.value })}
+            onChange={(event) =>
+              onElementChange({ className: event.target.value })
+            }
             value={selectedNode.props.className ?? ""}
           />
         </label>
@@ -91,7 +134,7 @@ export function ElementInspector({
               <button
                 className="rounded-md border border-slate-300 px-2 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
                 key={preset.label}
-                onClick={() => onChange({ className: preset.value })}
+                onClick={() => onElementChange({ className: preset.value })}
                 type="button"
               >
                 {preset.label}

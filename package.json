@@ -15,7 +15,8 @@
     "postcss": "^8.4.49",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
-    "tailwindcss": "^4.2.4"
+    "tailwindcss": "^4.2.4",
+    "tldraw": "^4.5.10"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
@@ -24,4 +25,3 @@
     "typescript": "^5.9.0"
   }
 }
-

@@ -1,42 +1,91 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
-import { CanvasRenderer } from "@/components/canvas-renderer";
 import { ElementInspector } from "@/components/element-inspector";
 import { ExportPanel } from "@/components/export-panel";
+import { PageListPanel } from "@/components/page-list-panel";
 import { demoPrompts } from "@/lib/demo-prompts";
-import { sampleUiTree } from "@/lib/sample-ui";
+import { sampleWebsiteProject } from "@/lib/sample-website-project";
 import type { UIElementProps } from "@/lib/ui-schema";
+import { findNodeById } from "@/lib/ui-tree";
 import {
-  assignMissingNodeIds,
-  findNodeById,
-  updateNodePropsById,
-} from "@/lib/ui-tree";
+  findPageById,
+  normalizeProject,
+  updateNodePropsInPage,
+  updatePageById,
+  updatePageFrame,
+  updatePageTreeById,
+} from "@/lib/website-project";
+import type { WebsiteProject } from "@/lib/website-project-schema";
+
+const TldrawSiteCanvas = dynamic(
+  () =>
+    import("@/components/tldraw-site-canvas").then(
+      (mod) => mod.TldrawSiteCanvas,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <section className="flex min-h-[720px] items-center justify-center rounded-md border border-slate-200 bg-white text-sm text-slate-500">
+        Loading workspace...
+      </section>
+    ),
+  },
+);
 
 export function EditorShell() {
-  const [tree, setTree] = useState(() => assignMissingNodeIds(sampleUiTree));
-  const [selectedId, setSelectedId] = useState<string | null>("headline");
+  const [project, setProject] = useState<WebsiteProject>(() =>
+    normalizeProject(sampleWebsiteProject),
+  );
+  const [selectedPageId, setSelectedPageId] = useState<string | null>("home");
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(
+    "home-headline",
+  );
   const [prompt, setPrompt] = useState<string>(demoPrompts[0]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
+  const selectedPage = useMemo(
+    () => findPageById(project, selectedPageId),
+    [project, selectedPageId],
+  );
   const selectedNode = useMemo(
-    () => findNodeById(tree, selectedId),
-    [tree, selectedId],
+    () => findNodeById(selectedPage?.tree ?? project.pages[0]?.tree, selectedElementId),
+    [project.pages, selectedElementId, selectedPage?.tree],
   );
 
   const updateSelectedNode = (props: Partial<UIElementProps>) => {
-    if (!selectedId) {
+    if (!selectedPageId || !selectedElementId) {
       return;
     }
 
-    setTree((currentTree) => updateNodePropsById(currentTree, selectedId, props));
+    setProject((currentProject) =>
+      updateNodePropsInPage(
+        currentProject,
+        selectedPageId,
+        selectedElementId,
+        props,
+      ),
+    );
   };
 
   const resetCanvas = () => {
-    setTree(assignMissingNodeIds(sampleUiTree));
-    setSelectedId("headline");
-    setStatusMessage("Reset to the backup sample UI.");
+    const nextProject = normalizeProject(sampleWebsiteProject);
+    setProject(nextProject);
+    setSelectedPageId(nextProject.pages[0]?.id ?? null);
+    setSelectedElementId(`${nextProject.pages[0]?.id}-headline`);
+    setStatusMessage("Reset to the backup sample website.");
+  };
+
+  const selectPage = (pageId: string) => {
+    setSelectedPageId(pageId);
+    setSelectedElementId(null);
+  };
+
+  const selectElement = (pageId: string, elementId: string) => {
+    setSelectedPageId(pageId);
+    setSelectedElementId(elementId);
   };
 
   const generateUi = async () => {
@@ -60,27 +109,39 @@ export function EditorShell() {
       });
 
       const data = (await response.json()) as {
-        tree?: typeof tree;
+        project?: WebsiteProject;
+        tree?: WebsiteProject["pages"][number]["tree"];
         fallback?: boolean;
         message?: string;
       };
 
-      if (!data.tree) {
-        setStatusMessage("Generation did not return a UI tree.");
+      if (!data.project && !data.tree) {
+        setStatusMessage("Generation did not return a website project.");
         return;
       }
 
-      const nextTree = assignMissingNodeIds(data.tree);
-      setTree(nextTree);
-      setSelectedId(nextTree.children?.[0]?.id ?? nextTree.id);
+      if (data.project) {
+        const nextProject = normalizeProject(data.project);
+        setProject(nextProject);
+        setSelectedPageId(nextProject.pages[0]?.id ?? null);
+        setSelectedElementId(null);
+      } else if (data.tree && selectedPageId) {
+        setProject((currentProject) =>
+          updatePageTreeById(currentProject, selectedPageId, data.tree!),
+        );
+        setSelectedElementId(data.tree.children?.[0]?.id ?? data.tree.id);
+      }
+
       setStatusMessage(
         data.message ??
-          (data.fallback ? "Loaded fallback UI." : "Generated UI."),
+          (data.fallback ? "Loaded fallback website." : "Generated website."),
       );
     } catch {
-      setTree(assignMissingNodeIds(sampleUiTree));
-      setSelectedId("headline");
-      setStatusMessage("Generation failed. Loaded the sample UI instead.");
+      const nextProject = normalizeProject(sampleWebsiteProject);
+      setProject(nextProject);
+      setSelectedPageId(nextProject.pages[0]?.id ?? null);
+      setSelectedElementId(null);
+      setStatusMessage("Generation failed. Loaded the sample website instead.");
     } finally {
       setIsGenerating(false);
     }
@@ -96,16 +157,16 @@ export function EditorShell() {
           </div>
           <div className="flex items-center gap-2 text-sm text-slate-600">
             <span className="rounded-md border border-slate-300 bg-white px-3 py-2">
-              Milestones 2-4
+              tldraw workspace
             </span>
             <span className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700">
-              Local editing
+              Multi-page canvas
             </span>
           </div>
         </header>
 
-        <div className="grid flex-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <section className="flex flex-col gap-4">
+        <div className="grid flex-1 gap-5 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
+          <aside className="flex flex-col gap-4">
             <div className="rounded-md border border-slate-200 bg-white p-4">
               <label
                 className="mb-2 block text-sm font-semibold text-slate-800"
@@ -148,38 +209,59 @@ export function EditorShell() {
                   onClick={resetCanvas}
                   type="button"
                 >
-                  Reset
+                Reset
                 </button>
               </div>
             </div>
 
-            <div
-              className="rounded-md border border-slate-200 bg-white p-4"
-              onClick={() => setSelectedId(null)}
-            >
-              <CanvasRenderer
-                node={tree}
-                onSelect={setSelectedId}
-                selectedId={selectedId}
-              />
-            </div>
-            <ExportPanel tree={tree} />
-          </section>
-
-          <aside className="rounded-md border border-slate-200 bg-white p-4">
-            <ElementInspector
-              onChange={updateSelectedNode}
-              selectedNode={selectedNode}
+            <PageListPanel
+              onSelectPage={selectPage}
+              project={project}
+              selectedPageId={selectedPageId}
             />
+          </aside>
 
-            <div className="mt-5 border-t border-slate-200 pt-4">
+          <TldrawSiteCanvas
+            onFrameChange={(pageId, frame) =>
+              setProject((currentProject) =>
+                updatePageFrame(currentProject, pageId, frame),
+              )
+            }
+            onSelectElement={selectElement}
+            onSelectPage={selectPage}
+            project={project}
+            selectedElementId={selectedElementId}
+            selectedPageId={selectedPageId}
+          />
+
+          <aside className="flex flex-col gap-4">
+            <section className="rounded-md border border-slate-200 bg-white p-4">
+              <ElementInspector
+                onElementChange={updateSelectedNode}
+                onPageChange={(patch) => {
+                  if (!selectedPageId) {
+                    return;
+                  }
+
+                  setProject((currentProject) =>
+                    updatePageById(currentProject, selectedPageId, patch),
+                  );
+                }}
+                selectedNode={selectedNode}
+                selectedPage={selectedPage}
+              />
+            </section>
+
+            <ExportPanel project={project} selectedPageId={selectedPageId} />
+
+            <section className="rounded-md border border-slate-200 bg-white p-4">
               <h3 className="text-sm font-semibold text-slate-900">
-                Current tree
+                Project JSON
               </h3>
               <pre className="mt-2 max-h-72 overflow-auto rounded-md bg-slate-950 p-3 text-xs leading-5 text-slate-100">
-                {JSON.stringify(tree, null, 2)}
+                {JSON.stringify(project, null, 2)}
               </pre>
-            </div>
+            </section>
           </aside>
         </div>
       </div>
