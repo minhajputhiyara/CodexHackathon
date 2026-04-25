@@ -16,6 +16,7 @@ import {
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { AIChatPanel } from "@/components/ai-chat-panel";
 import { ElementInspector } from "@/components/element-inspector";
+import { ExportDropdown } from "@/components/export-dropdown";
 import { LayersPanel } from "@/components/layers-panel";
 import { PageListPanel } from "@/components/page-list-panel";
 import { demoPrompts } from "@/lib/demo-prompts";
@@ -566,9 +567,7 @@ export function EditorShell() {
           >
             Projects
           </button>
-          <button className="rounded-md bg-[#8b5cf6] px-4 py-1.5 text-sm font-medium transition hover:bg-[#7c3aed]">
-            Export
-          </button>
+          <ExportDropdown project={project} selectedPageId={selectedPageId} />
           <button
             className="ml-2 flex h-8 items-center gap-2 rounded-full bg-[#1f1f1f] pl-1 pr-3 text-sm text-gray-300 transition hover:bg-[#262626] hover:text-white"
             onClick={logout}

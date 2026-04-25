@@ -12,6 +12,7 @@ interface LayersPanelProps {
   hoveredElementId?: string | null;
   onSelectElement: (pageId: string, elementId: string) => void;
   onHoverElement?: (elementId: string | null) => void;
+  onAddElement?: (elementType: string) => void;
 }
 
 export function LayersPanel({
@@ -21,6 +22,7 @@ export function LayersPanel({
   hoveredElementId,
   onSelectElement,
   onHoverElement,
+  onAddElement,
 }: LayersPanelProps) {
   const [activeTab, setActiveTab] = useState<"layers" | "source">("layers");
   const selectedPage = project.pages.find((p) => p.id === selectedPageId);

@@ -33,3 +33,22 @@ input,
 textarea {
   font: inherit;
 }
+
+/* Add cursor pointer to all interactive elements */
+button,
+a,
+[role="button"],
+[type="button"],
+[type="submit"],
+[type="reset"],
+select,
+label[for],
+input[type="checkbox"],
+input[type="radio"] {
+  cursor: pointer;
+}
+
+button:disabled,
+[disabled] {
+  cursor: not-allowed;
+}
