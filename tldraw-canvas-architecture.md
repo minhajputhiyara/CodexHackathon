@@ -2,9 +2,9 @@
 
 ## Purpose
 
-This document describes how UIForge should evolve from a single rendered UI tree into a multi-page website canvas using tldraw.
+This document describes how designPlate should evolve from a single rendered UI tree into a multi-page website canvas using tldraw.
 
-The goal is to show every generated website page in one zoomable workspace, similar to Figma artboards, while keeping the actual page content as editable React/HTML generated from UIForge's JSON schema.
+The goal is to show every generated website page in one zoomable workspace, similar to Figma artboards, while keeping the actual page content as editable React/HTML generated from designPlate's JSON schema.
 
 This is an implementation plan only. It does not change code yet.
 
@@ -12,7 +12,7 @@ This is an implementation plan only. It does not change code yet.
 
 Use tldraw as the workspace layer, not as the UI rendering engine.
 
-UIForge should not convert generated website UIs into tldraw shapes. The generated pages should stay as JSON UI trees rendered by React components. tldraw should provide the infinite canvas behavior around those pages:
+designPlate should not convert generated website UIs into tldraw shapes. The generated pages should stay as JSON UI trees rendered by React components. tldraw should provide the infinite canvas behavior around those pages:
 
 - Pan
 - Zoom
@@ -206,7 +206,7 @@ Clicking a page frame should set `selectedPageId`.
 
 ### Element-Level Interaction
 
-Handled by UIForge's React renderer:
+Handled by designPlate's React renderer:
 
 - Click text, button, image, card, stack, container, or section
 - Stop event propagation so the click selects the inner element instead of only the page frame
@@ -615,13 +615,13 @@ Defer:
 
 ## Final Architecture Summary
 
-UIForge should use tldraw as a Figma-like workspace for arranging and viewing multiple website pages, while preserving the current JSON-to-React renderer as the actual UI rendering engine.
+designPlate should use tldraw as a Figma-like workspace for arranging and viewing multiple website pages, while preserving the current JSON-to-React renderer as the actual UI rendering engine.
 
 The most important rule is:
 
 ```text
 tldraw owns where pages live.
-UIForge owns what pages are.
+designPlate owns what pages are.
 ```
 
 That split keeps the prototype demoable, exportable, and easier to debug.

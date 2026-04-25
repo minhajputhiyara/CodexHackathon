@@ -1,5 +1,5 @@
 {
-  "name": "uiforge",
+  "name": "designplate",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -11,6 +11,8 @@
   "dependencies": {
     "@craftjs/core": "^0.2.12",
     "@tailwindcss/postcss": "^4.2.4",
+    "lucide-react": "^1.11.0",
+    "mongodb": "^7.2.0",
     "next": "^16.2.4",
     "postcss": "^8.4.49",
     "react": "^19.2.5",

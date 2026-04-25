@@ -43,7 +43,7 @@ function pageTree(pageId: string, title: string, body: string): UIElementNode {
         children: [
           text(
             `${pageId}-eyebrow`,
-            "UIForge",
+            "designPlate",
             "text-sm font-semibold uppercase text-teal-700",
           ),
           text(`${pageId}-headline`, title, "text-6xl font-bold text-slate-950"),
@@ -116,8 +116,8 @@ function pageTree(pageId: string, title: string, body: string): UIElementNode {
 const frames = layoutFrames(4);
 
 export const sampleWebsiteProject: WebsiteProject = normalizeProject({
-  id: "uiforge-sample",
-  name: "UIForge SaaS Site",
+  id: "designplate-sample",
+  name: "designPlate SaaS Site",
   pages: [
     {
       id: "home",
@@ -149,7 +149,7 @@ export const sampleWebsiteProject: WebsiteProject = normalizeProject({
       tree: pageTree(
         "about",
         "A canvas built for generated interfaces",
-        "UIForge keeps AI output structured, editable, and exportable instead of flattening work into static images.",
+        "designPlate keeps AI output structured, editable, and exportable instead of flattening work into static images.",
       ),
     },
     {
@@ -159,7 +159,7 @@ export const sampleWebsiteProject: WebsiteProject = normalizeProject({
       frame: frames[3],
       tree: pageTree(
         "contact",
-        "Bring UIForge to your next product sprint",
+        "Bring designPlate to your next product sprint",
         "Share a brief, generate a site, edit the details, and hand off clean React with Tailwind.",
       ),
     },

@@ -1,7 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { PanelsTopLeft } from "lucide-react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { AIChatPanel } from "@/components/ai-chat-panel";
 import { ElementInspector } from "@/components/element-inspector";
 import { LayersPanel } from "@/components/layers-panel";
@@ -35,7 +36,33 @@ const TldrawSiteCanvas = dynamic(
   },
 );
 
+type AuthUser = {
+  id: string;
+  email: string;
+  name: string;
+};
+
+type ProjectSummary = {
+  id: string;
+  name: string;
+  pagesCount: number;
+  updatedAt: string;
+};
+
 export function EditorShell() {
+  const [authStatus, setAuthStatus] = useState<
+    "checking" | "authenticated" | "unauthenticated"
+  >("checking");
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [authForm, setAuthForm] = useState({
+    email: "",
+    name: "",
+    password: "",
+  });
+  const [projects, setProjects] = useState<ProjectSummary[]>([]);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [project, setProject] = useState<WebsiteProject>(() =>
     normalizeProject(sampleWebsiteProject),
   );
@@ -58,6 +85,92 @@ export function EditorShell() {
     () => findNodeById(selectedPage?.tree ?? project.pages[0]?.tree, selectedElementId),
     [project.pages, selectedElementId, selectedPage?.tree],
   );
+
+  const loadProjects = async () => {
+    const response = await fetch("/api/projects");
+
+    if (!response.ok) {
+      setProjects([]);
+      return;
+    }
+
+    const data = (await response.json()) as { projects?: ProjectSummary[] };
+    setProjects(data.projects ?? []);
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkSession() {
+      try {
+        const response = await fetch("/api/auth/me");
+        const data = (await response.json()) as { user?: AuthUser | null };
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (response.ok && data.user) {
+          setAuthUser(data.user);
+          setAuthStatus("authenticated");
+          await loadProjects();
+        } else {
+          setAuthStatus("unauthenticated");
+        }
+      } catch {
+        if (isMounted) {
+          setAuthStatus("unauthenticated");
+        }
+      }
+    }
+
+    checkSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const submitAuth = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setAuthError(null);
+    setIsAuthenticating(true);
+
+    try {
+      const response = await fetch(`/api/auth/${authMode}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(authForm),
+      });
+      const data = (await response.json()) as {
+        message?: string;
+        user?: AuthUser;
+      };
+
+      if (!response.ok || !data.user) {
+        setAuthError(data.message ?? "Authentication failed.");
+        return;
+      }
+
+      setAuthUser(data.user);
+      setAuthStatus("authenticated");
+      setAuthForm({ email: "", name: "", password: "" });
+      await loadProjects();
+    } catch {
+      setAuthError("Could not reach the authentication server.");
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const logout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setAuthUser(null);
+    setProjects([]);
+    setAuthStatus("unauthenticated");
+  };
 
   const updateSelectedNode = (props: Partial<UIElementProps>) => {
     if (!selectedPageId || !selectedElementId) {
@@ -135,41 +248,40 @@ export function EditorShell() {
     }
   };
 
+  if (authStatus === "checking") {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#0a0a0a] text-sm text-gray-400">
+        Checking session...
+      </div>
+    );
+  }
+
+  if (authStatus === "unauthenticated") {
+    return (
+      <AuthPanel
+        authError={authError}
+        authForm={authForm}
+        authMode={authMode}
+        isAuthenticating={isAuthenticating}
+        onChange={setAuthForm}
+        onModeChange={(mode) => {
+          setAuthMode(mode);
+          setAuthError(null);
+        }}
+        onSubmit={submitAuth}
+      />
+    );
+  }
+
   return (
     <div className="flex h-screen bg-[#0a0a0a] text-white">
       {/* Top Bar */}
       <div className="fixed left-0 right-0 top-0 z-50 flex h-12 items-center justify-between border-b border-[#2a2a2a] bg-[#0a0a0a] px-4">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#8b5cf6]">
-            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
-            </svg>
+            <PanelsTopLeft className="h-5 w-5 text-white" strokeWidth={2} />
           </div>
-          {isEditingTitle ? (
-            <input
-              type="text"
-              value={projectTitle}
-              onChange={(e) => setProjectTitle(e.target.value)}
-              onBlur={() => setIsEditingTitle(false)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  setIsEditingTitle(false);
-                }
-                if (e.key === "Escape") {
-                  setIsEditingTitle(false);
-                }
-              }}
-              autoFocus
-              className="rounded border border-[#8b5cf6] bg-[#141414] px-2 py-1 text-sm font-medium text-white outline-none"
-            />
-          ) : (
-            <button
-              onClick={() => setIsEditingTitle(true)}
-              className="rounded px-2 py-1 text-sm font-medium text-white transition hover:bg-[#1f1f1f]"
-            >
-              {projectTitle}
-            </button>
-          )}
+          <span className="text-sm font-medium">Untitled Project</span>
           <span className="rounded bg-[#1f1f1f] px-2 py-0.5 text-xs text-gray-400">Autosaved</span>
         </div>
 
@@ -193,24 +305,34 @@ export function EditorShell() {
           <button className="rounded-md bg-[#8b5cf6] px-4 py-1.5 text-sm font-medium transition hover:bg-[#7c3aed]">
             Export
           </button>
-          <div className="ml-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#8b5cf6] text-sm font-medium">
-            K
-          </div>
+          <button
+            className="ml-2 flex h-8 items-center gap-2 rounded-full bg-[#1f1f1f] pl-1 pr-3 text-sm text-gray-300 transition hover:bg-[#262626] hover:text-white"
+            onClick={logout}
+            type="button"
+          >
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#8b5cf6] text-xs font-medium text-white">
+              {authUser?.name.charAt(0).toUpperCase() ?? "U"}
+            </span>
+            Sign out
+          </button>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="mt-12 flex w-full">
         {/* Left Sidebar - Layers */}
-        <div className="w-64 border-r border-[#2a2a2a]">
-          <LayersPanel
-            hoveredElementId={hoveredElementId}
+        <div className="flex w-64 flex-col border-r border-[#2a2a2a]">
+          <div className="min-h-0 flex-1">
+            <LayersPanel
+              hoveredElementId={hoveredElementId}
             onHoverElement={setHoveredElementId}
             project={project}
-            selectedPageId={selectedPageId}
-            selectedElementId={selectedElementId}
-            onSelectElement={selectElement}
-          />
+              selectedPageId={selectedPageId}
+              selectedElementId={selectedElementId}
+              onSelectElement={selectElement}
+            />
+          </div>
+          <UserProjects projects={projects} />
         </div>
 
         {/* Center - Canvas */}
@@ -349,3 +471,201 @@ export function EditorShell() {
   );
 }
 
+type AuthPanelProps = {
+  authError: string | null;
+  authForm: {
+    email: string;
+    name: string;
+    password: string;
+  };
+  authMode: "login" | "signup";
+  isAuthenticating: boolean;
+  onChange: (form: AuthPanelProps["authForm"]) => void;
+  onModeChange: (mode: "login" | "signup") => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+};
+
+function AuthPanel({
+  authError,
+  authForm,
+  authMode,
+  isAuthenticating,
+  onChange,
+  onModeChange,
+  onSubmit,
+}: AuthPanelProps) {
+  const isSignup = authMode === "signup";
+
+  return (
+    <div className="flex min-h-screen bg-[#0a0a0a] text-white">
+      <div className="flex flex-1 items-center justify-center px-6 py-10">
+        <div className="w-full max-w-sm">
+          <div className="mb-8 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#8b5cf6]">
+              <PanelsTopLeft className="h-6 w-6 text-white" strokeWidth={2} />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold">designPlate</h1>
+              <p className="text-sm text-gray-400">Sign in to open your projects.</p>
+            </div>
+          </div>
+
+          <div className="mb-5 grid grid-cols-2 rounded-md border border-[#2a2a2a] bg-[#141414] p-1">
+            <button
+              className={`rounded px-3 py-2 text-sm font-medium transition ${
+                !isSignup
+                  ? "bg-[#8b5cf6] text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}
+              onClick={() => onModeChange("login")}
+              type="button"
+            >
+              Login
+            </button>
+            <button
+              className={`rounded px-3 py-2 text-sm font-medium transition ${
+                isSignup
+                  ? "bg-[#8b5cf6] text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}
+              onClick={() => onModeChange("signup")}
+              type="button"
+            >
+              Sign up
+            </button>
+          </div>
+
+          <form className="space-y-4" onSubmit={onSubmit}>
+            {isSignup ? (
+              <label className="block">
+                <span className="mb-2 block text-sm text-gray-300">Name</span>
+                <input
+                  className="w-full rounded-md border border-[#2a2a2a] bg-[#141414] px-3 py-2 text-sm text-white outline-none transition placeholder:text-gray-600 focus:border-[#8b5cf6]"
+                  onChange={(event) =>
+                    onChange({ ...authForm, name: event.target.value })
+                  }
+                  placeholder="Minhaj"
+                  value={authForm.name}
+                />
+              </label>
+            ) : null}
+
+            <label className="block">
+              <span className="mb-2 block text-sm text-gray-300">Email</span>
+              <input
+                className="w-full rounded-md border border-[#2a2a2a] bg-[#141414] px-3 py-2 text-sm text-white outline-none transition placeholder:text-gray-600 focus:border-[#8b5cf6]"
+                onChange={(event) =>
+                  onChange({ ...authForm, email: event.target.value })
+                }
+                placeholder="you@example.com"
+                type="email"
+                value={authForm.email}
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm text-gray-300">Password</span>
+              <input
+                className="w-full rounded-md border border-[#2a2a2a] bg-[#141414] px-3 py-2 text-sm text-white outline-none transition placeholder:text-gray-600 focus:border-[#8b5cf6]"
+                onChange={(event) =>
+                  onChange({ ...authForm, password: event.target.value })
+                }
+                placeholder="At least 6 characters"
+                type="password"
+                value={authForm.password}
+              />
+            </label>
+
+            {authError ? (
+              <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+                {authError}
+              </p>
+            ) : null}
+
+            <button
+              className="w-full rounded-md bg-[#8b5cf6] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#7c3aed] disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isAuthenticating}
+              type="submit"
+            >
+              {isAuthenticating
+                ? "Authenticating..."
+                : isSignup
+                  ? "Create account"
+                  : "Login"}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div className="hidden flex-1 border-l border-[#2a2a2a] bg-[#111111] p-10 lg:block">
+        <div className="flex h-full flex-col justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.2em] text-[#8b5cf6]">
+              User workspace
+            </p>
+            <h2 className="mt-4 max-w-lg text-4xl font-bold leading-tight">
+              Generate, edit, and reopen the projects tied to your account.
+            </h2>
+          </div>
+          <div className="grid gap-3">
+            {["designPlate Starter Site", "Landing page draft", "Client website"].map(
+              (name, index) => (
+                <div
+                  className="rounded-md border border-[#2a2a2a] bg-[#171717] p-4"
+                  key={name}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{name}</span>
+                    <span className="text-xs text-gray-500">
+                      {index + 2} pages
+                    </span>
+                  </div>
+                  <div className="mt-3 h-2 rounded bg-[#252525]" />
+                </div>
+              ),
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function UserProjects({ projects }: { projects: ProjectSummary[] }) {
+  return (
+    <div className="border-t border-[#2a2a2a] bg-[#101010] p-3">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-xs font-semibold uppercase text-gray-500">
+          Your projects
+        </h2>
+        <span className="rounded bg-[#1f1f1f] px-2 py-0.5 text-xs text-gray-500">
+          {projects.length}
+        </span>
+      </div>
+
+      <div className="grid max-h-52 gap-2 overflow-y-auto">
+        {projects.length > 0 ? (
+          projects.map((item) => (
+            <button
+              className="rounded-md border border-[#2a2a2a] bg-[#151515] p-3 text-left transition hover:border-[#8b5cf6] hover:bg-[#1b1b1b]"
+              key={item.id}
+              type="button"
+            >
+              <div className="truncate text-sm font-medium text-white">
+                {item.name}
+              </div>
+              <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+                <span>{item.pagesCount} pages</span>
+                <span>{new Date(item.updatedAt).toLocaleDateString()}</span>
+              </div>
+            </button>
+          ))
+        ) : (
+          <div className="rounded-md border border-dashed border-[#2a2a2a] p-3 text-sm text-gray-500">
+            No projects yet.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
