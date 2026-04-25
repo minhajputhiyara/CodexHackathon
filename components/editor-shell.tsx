@@ -698,6 +698,7 @@ export function EditorShell() {
                 </div>
 
                 <ElementInspector
+                  mode={activeTab}
                   onElementChange={updateSelectedNode}
                   onPageChange={(patch) => {
                     if (!selectedPageId) {
@@ -1027,34 +1028,12 @@ function AuthPanel({
         </div>
       </div>
 
-      <div className="hidden flex-1 border-l border-[#2a2a2a] bg-[#111111] p-10 lg:block">
-        <div className="flex h-full flex-col justify-between">
-          <div>
-            <p className="text-sm uppercase tracking-[0.2em] text-[#8b5cf6]">
-              User workspace
-            </p>
-            <h2 className="mt-4 max-w-lg text-4xl font-bold leading-tight">
-              Generate, edit, and reopen the projects tied to your account.
-            </h2>
-          </div>
-          <div className="grid gap-3">
-            {["designPlate Starter Site", "Landing page draft", "Client website"].map(
-              (name, index) => (
-                <div
-                  className="rounded-md border border-[#2a2a2a] bg-[#171717] p-4"
-                  key={name}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{name}</span>
-                    <span className="text-xs text-gray-500">
-                      {index + 2} pages
-                    </span>
-                  </div>
-                  <div className="mt-3 h-2 rounded bg-[#252525]" />
-                </div>
-              ),
-            )}
-          </div>
+      <div className="hidden flex-1 border-l border-[#2a2a2a] bg-[#111111] lg:flex lg:items-center lg:justify-center">
+        <div className="text-center">
+          <h1 className="text-5xl font-bold text-white">
+            Build <span className="text-[#8b5cf6]">beautiful</span> product with{" "}
+            <span className="text-[#8b5cf6]">simple</span> prompt
+          </h1>
         </div>
       </div>
     </div>
