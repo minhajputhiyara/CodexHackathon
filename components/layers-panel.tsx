@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import type { UIElementNode } from "@/lib/ui-schema";
 import type { WebsiteProject } from "@/lib/website-project-schema";
+import { SourceControlPanel } from "./source-control-panel";
 
 interface LayersPanelProps {
   project: WebsiteProject;
@@ -22,6 +24,7 @@ export function LayersPanel({
   onHoverElement,
   onAddElement,
 }: LayersPanelProps) {
+  const [activeTab, setActiveTab] = useState<"layers" | "source">("layers");
   const selectedPage = project.pages.find((p) => p.id === selectedPageId);
 
   const renderNode = (node: UIElementNode, depth = 0): React.ReactNode => {
@@ -66,16 +69,37 @@ export function LayersPanel({
     <div className="flex h-full flex-col bg-[#0a0a0a]">
       {/* Tabs */}
       <div className="flex border-b border-[#2a2a2a]">
-        <button className="border-b-2 border-[#8b5cf6] px-4 py-3 text-sm font-medium text-white">
+        <button
+          onClick={() => setActiveTab("layers")}
+          className={`border-b-2 px-4 py-3 text-sm font-medium transition ${
+            activeTab === "layers"
+              ? "border-[#8b5cf6] text-white"
+              : "border-transparent text-gray-400 hover:text-white"
+          }`}
+        >
           Layers
         </button>
-        <button className="px-4 py-3 text-sm font-medium text-gray-400 hover:text-white">
-          Components
+        <button
+          onClick={() => setActiveTab("source")}
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition ${
+            activeTab === "source"
+              ? "border-[#8b5cf6] text-white"
+              : "border-transparent text-gray-400 hover:text-white"
+          }`}
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+          </svg>
+          Source Control
         </button>
       </div>
 
-      {/* Search */}
-      <div className="border-b border-[#2a2a2a] p-3">
+      {activeTab === "source" ? (
+        <SourceControlPanel />
+      ) : (
+        <>
+          {/* Search */}
+          <div className="border-b border-[#2a2a2a] p-3">
         <div className="flex items-center gap-2 rounded-md border border-[#2a2a2a] bg-[#141414] px-3 py-1.5">
           <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -130,6 +154,8 @@ export function LayersPanel({
           ))}
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }
