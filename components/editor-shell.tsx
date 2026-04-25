@@ -19,6 +19,12 @@ import { ElementInspector } from "@/components/element-inspector";
 import { ExportDropdown } from "@/components/export-dropdown";
 import { LayersPanel } from "@/components/layers-panel";
 import { PageListPanel } from "@/components/page-list-panel";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { demoPrompts } from "@/lib/demo-prompts";
 import { sampleWebsiteProject } from "@/lib/sample-website-project";
 import type { UIElementNode, UIElementProps } from "@/lib/ui-schema";
@@ -587,18 +593,24 @@ export function EditorShell() {
   }
 
   return (
-    <div className="flex h-screen bg-[#0a0a0a] text-white">
+    <TooltipProvider>
+      <div className="flex h-screen bg-[#0a0a0a] text-white">
       {/* Top Bar */}
       <div className="fixed left-0 right-0 top-0 z-50 flex h-12 items-center justify-between border-b border-[#2a2a2a] bg-[#0a0a0a] px-4">
         <div className="flex items-center gap-3">
           <img src="/logo.png" alt="designplate" className="h-8 w-auto rounded-md" />
-          <button
-            onClick={() => setIsEditingTitle(true)}
-            className="rounded px-2 py-1 text-lg font-bold transition hover:bg-[#1f1f1f]"
-          >
-            <span className="text-white">design</span>
-            <span className="bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] bg-clip-text text-transparent">plate</span>
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setIsEditingTitle(true)}
+                className="rounded px-2 py-1 text-lg font-bold transition hover:bg-[#1f1f1f]"
+              >
+                <span className="text-white">design</span>
+                <span className="bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] bg-clip-text text-transparent">plate</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Edit project title</TooltipContent>
+          </Tooltip>
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#8b5cf6]">
             <PanelsTopLeft className="h-5 w-5 text-white" strokeWidth={2} />
           </div>
@@ -613,24 +625,34 @@ export function EditorShell() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            className="rounded-md border border-[#2a2a2a] px-3 py-1.5 text-sm font-medium text-gray-300 transition hover:bg-[#1f1f1f] hover:text-white"
-            onClick={() => setWorkspaceMode("dashboard")}
-            type="button"
-          >
-            Projects
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                className="rounded-md border border-[#2a2a2a] px-3 py-1.5 text-sm font-medium text-gray-300 transition hover:bg-[#1f1f1f] hover:text-white"
+                onClick={() => setWorkspaceMode("dashboard")}
+                type="button"
+              >
+                Projects
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Go to projects dashboard</TooltipContent>
+          </Tooltip>
           <ExportDropdown project={project} selectedPageId={selectedPageId} />
           
           {/* Profile Dropdown */}
           <div className="relative ml-2">
-            <button
-              onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#8b5cf6] text-sm font-medium text-white transition hover:bg-[#7c3aed]"
-              type="button"
-            >
-              {authUser?.name.charAt(0).toUpperCase() ?? "U"}
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-[#8b5cf6] text-sm font-medium text-white transition hover:bg-[#7c3aed]"
+                  type="button"
+                >
+                  {authUser?.name.charAt(0).toUpperCase() ?? "U"}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Profile menu</TooltipContent>
+            </Tooltip>
 
             {showProfileDropdown && (
               <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-md border border-[#2a2a2a] bg-[#141414] py-1 shadow-lg">
@@ -638,18 +660,23 @@ export function EditorShell() {
                   <div className="text-sm font-medium text-white">{authUser?.name}</div>
                   <div className="text-xs text-gray-400">{authUser?.email}</div>
                 </div>
-                <button
-                  onClick={() => {
-                    logout();
-                    setShowProfileDropdown(false);
-                  }}
-                  className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-300 transition hover:bg-[#1f1f1f] hover:text-white"
-                >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  Sign out
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setShowProfileDropdown(false);
+                      }}
+                      className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-300 transition hover:bg-[#1f1f1f] hover:text-white"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      Sign out
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Sign out of your account</TooltipContent>
+                </Tooltip>
               </div>
             )}
           </div>
@@ -727,26 +754,36 @@ export function EditorShell() {
           
           {/* Tabs */}
           <div className="flex border-b border-[#2a2a2a]">
-            <button
-              onClick={() => setShowChat(true)}
-              className={`flex-1 border-b-2 px-4 py-3 text-sm font-medium transition ${
-                showChat
-                  ? "border-[#8b5cf6] text-white"
-                  : "border-transparent text-gray-400 hover:text-white"
-              }`}
-            >
-              Chat
-            </button>
-            <button
-              onClick={() => setShowChat(false)}
-              className={`flex-1 border-b-2 px-4 py-3 text-sm font-medium transition ${
-                !showChat
-                  ? "border-[#8b5cf6] text-white"
-                  : "border-transparent text-gray-400 hover:text-white"
-              }`}
-            >
-              Properties
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setShowChat(true)}
+                  className={`flex-1 border-b-2 px-4 py-3 text-sm font-medium transition ${
+                    showChat
+                      ? "border-[#8b5cf6] text-white"
+                      : "border-transparent text-gray-400 hover:text-white"
+                  }`}
+                >
+                  Chat
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Open AI chat panel</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setShowChat(false)}
+                  className={`flex-1 border-b-2 px-4 py-3 text-sm font-medium transition ${
+                    !showChat
+                      ? "border-[#8b5cf6] text-white"
+                      : "border-transparent text-gray-400 hover:text-white"
+                  }`}
+                >
+                  Properties
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Open element properties panel</TooltipContent>
+            </Tooltip>
           </div>
 
           {/* Content */}
@@ -761,26 +798,36 @@ export function EditorShell() {
               <div className="h-full overflow-y-auto p-4">
                 {/* Properties Tabs */}
                 <div className="mb-4 flex gap-2">
-                  <button
-                    onClick={() => setActiveTab("design")}
-                    className={`rounded px-3 py-1.5 text-sm font-medium transition ${
-                      activeTab === "design"
-                        ? "bg-[#8b5cf6] text-white"
-                        : "bg-[#141414] text-gray-400 hover:text-white"
-                    }`}
-                  >
-                    Design
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("advanced")}
-                    className={`rounded px-3 py-1.5 text-sm font-medium transition ${
-                      activeTab === "advanced"
-                        ? "bg-[#8b5cf6] text-white"
-                        : "bg-[#141414] text-gray-400 hover:text-white"
-                    }`}
-                  >
-                    Advanced
-                  </button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setActiveTab("design")}
+                        className={`rounded px-3 py-1.5 text-sm font-medium transition ${
+                          activeTab === "design"
+                            ? "bg-[#8b5cf6] text-white"
+                            : "bg-[#141414] text-gray-400 hover:text-white"
+                        }`}
+                      >
+                        Design
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Design properties</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setActiveTab("advanced")}
+                        className={`rounded px-3 py-1.5 text-sm font-medium transition ${
+                          activeTab === "advanced"
+                            ? "bg-[#8b5cf6] text-white"
+                            : "bg-[#141414] text-gray-400 hover:text-white"
+                        }`}
+                      >
+                        Advanced
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Advanced properties</TooltipContent>
+                  </Tooltip>
                 </div>
 
                 <ElementInspector
@@ -804,6 +851,7 @@ export function EditorShell() {
         </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 }
 
@@ -848,7 +896,8 @@ function DashboardHome({
   }, [isCreatingProject]);
 
   return (
-    <div className="min-h-screen overflow-y-auto bg-black text-white">
+    <TooltipProvider>
+      <div className="min-h-screen overflow-y-auto bg-black text-white">
       <header className="flex h-14 items-center justify-between border-b border-[#171717] px-6">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#8b5cf6]">
@@ -856,16 +905,21 @@ function DashboardHome({
           </div>
           <span className="text-sm font-semibold">designPlate</span>
         </div>
-        <button
-          className="flex h-9 items-center gap-2 rounded-full bg-[#171717] pl-1 pr-3 text-sm text-gray-300 transition hover:bg-[#222] hover:text-white"
-          onClick={onLogout}
-          type="button"
-        >
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#8b5cf6] text-xs font-medium text-white">
-            {authUser?.name.charAt(0).toUpperCase() ?? "U"}
-          </span>
-          <LogOut className="h-4 w-4" />
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              className="flex h-9 items-center gap-2 rounded-full bg-[#171717] pl-1 pr-3 text-sm text-gray-300 transition hover:bg-[#222] hover:text-white"
+              onClick={onLogout}
+              type="button"
+            >
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#8b5cf6] text-xs font-medium text-white">
+                {authUser?.name.charAt(0).toUpperCase() ?? "U"}
+              </span>
+              <LogOut className="h-4 w-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>Sign out</TooltipContent>
+        </Tooltip>
       </header>
 
       <main className="px-6 pb-12">
@@ -895,16 +949,31 @@ function DashboardHome({
             />
             <div className="mt-4 flex items-center justify-between gap-4">
               <div className="flex items-center gap-4 text-gray-400">
-                <button className="transition hover:text-white" type="button">
-                  <Image className="h-5 w-5" />
-                </button>
-                <button className="transition hover:text-white" type="button">
-                  <Pencil className="h-5 w-5" />
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="transition hover:text-white" type="button">
+                      <Image className="h-5 w-5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Upload image</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="transition hover:text-white" type="button">
+                      <Pencil className="h-5 w-5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Draw or sketch</TooltipContent>
+                </Tooltip>
                 <span className="text-lg leading-none">/</span>
-                <button className="transition hover:text-white" type="button">
-                  <FileText className="h-5 w-5" />
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="transition hover:text-white" type="button">
+                      <FileText className="h-5 w-5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Attach document</TooltipContent>
+                </Tooltip>
               </div>
 
               <div className="flex items-center gap-4">
@@ -912,22 +981,27 @@ function DashboardHome({
                   <Palette className="h-5 w-5" />
                   Use Design System
                 </span>
-                <button
-                  className={cx(
-                    "flex h-14 items-center justify-center rounded-full bg-white text-black transition hover:bg-gray-200 disabled:cursor-not-allowed",
-                    isCreatingProject
-                      ? "w-72 px-5 text-sm font-semibold"
-                      : "w-14 disabled:opacity-50",
-                  )}
-                  disabled={!dashboardPrompt.trim() || isCreatingProject}
-                  type="submit"
-                >
-                  {isCreatingProject ? (
-                    <span className="truncate">{loadingMessage}</span>
-                  ) : (
-                    <ArrowUp className="h-7 w-7" />
-                  )}
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      className={cx(
+                        "flex h-14 items-center justify-center rounded-full bg-white text-black transition hover:bg-gray-200 disabled:cursor-not-allowed",
+                        isCreatingProject
+                          ? "w-72 px-5 text-sm font-semibold"
+                          : "w-14 disabled:opacity-50",
+                      )}
+                      disabled={!dashboardPrompt.trim() || isCreatingProject}
+                      type="submit"
+                    >
+                      {isCreatingProject ? (
+                        <span className="truncate">{loadingMessage}</span>
+                      ) : (
+                        <ArrowUp className="h-7 w-7" />
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Create new project</TooltipContent>
+                </Tooltip>
               </div>
             </div>
             {dashboardError ? (
@@ -938,65 +1012,95 @@ function DashboardHome({
           </form>
 
           <div className="mt-8 flex flex-wrap justify-center gap-3 rounded-full bg-[#161616] px-4 py-2 text-sm font-medium text-gray-400">
-            <button className="flex items-center gap-2 px-2 py-1 transition hover:text-white" type="button">
-              <Image className="h-4 w-4" />
-              Recreate Screenshot
-            </button>
-            <button className="flex items-center gap-2 px-2 py-1 transition hover:text-white" type="button">
-              <Globe className="h-4 w-4" />
-              Import from Site
-            </button>
-            <button className="flex items-center gap-2 px-2 py-1 transition hover:text-white" type="button">
-              <Sparkles className="h-4 w-4" />
-              Explore Effects
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="flex items-center gap-2 px-2 py-1 transition hover:text-white" type="button">
+                  <Image className="h-4 w-4" />
+                  Recreate Screenshot
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Upload a screenshot to recreate</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="flex items-center gap-2 px-2 py-1 transition hover:text-white" type="button">
+                  <Globe className="h-4 w-4" />
+                  Import from Site
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Import design from existing website</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="flex items-center gap-2 px-2 py-1 transition hover:text-white" type="button">
+                  <Sparkles className="h-4 w-4" />
+                  Explore Effects
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Browse visual effects library</TooltipContent>
+            </Tooltip>
           </div>
         </section>
 
         <section className="mx-auto max-w-7xl">
           <div className="mb-6 flex items-center justify-between gap-4">
             <h2 className="text-2xl font-bold">Recent Projects</h2>
-            <button className="text-sm font-semibold text-gray-300 transition hover:text-white" type="button">
-              Extract Design System
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="text-sm font-semibold text-gray-300 transition hover:text-white" type="button">
+                  Extract Design System
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Extract design system from projects</TooltipContent>
+            </Tooltip>
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <button
-              className="flex min-h-60 flex-col items-center justify-center rounded-2xl border border-dashed border-[#45454d] bg-[#18181d] text-gray-400 transition hover:border-[#8b5cf6] hover:text-white"
-              onClick={() => onChangePrompt("")}
-              type="button"
-            >
-              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#45454d]">
-                <Plus className="h-8 w-8" />
-              </span>
-              <span className="mt-5 text-lg font-medium">New Project</span>
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className="flex min-h-60 flex-col items-center justify-center rounded-2xl border border-dashed border-[#45454d] bg-[#18181d] text-gray-400 transition hover:border-[#8b5cf6] hover:text-white"
+                  onClick={() => onChangePrompt("")}
+                  type="button"
+                >
+                  <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#45454d]">
+                    <Plus className="h-8 w-8" />
+                  </span>
+                  <span className="mt-5 text-lg font-medium">New Project</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Create a new project</TooltipContent>
+            </Tooltip>
 
             {projects.map((item) => (
-              <button
-                className="group min-h-60 rounded-2xl bg-[#252529] p-4 text-left transition hover:bg-[#303035]"
-                key={item.id}
-                onClick={() => onSelectProject(item.id)}
-                type="button"
-              >
-                <ProjectThumbnail
-                  className="h-36 transition group-hover:border-[#8b5cf6]/40"
-                  previewTree={item.previewTree}
-                />
-                <div className="mt-4 truncate text-base font-semibold text-white">
-                  {item.name}
-                </div>
-                <div className="mt-2 flex items-center justify-between text-sm text-gray-500">
-                  <span>{item.pagesCount} pages</span>
-                  <span>{new Date(item.updatedAt).toLocaleDateString()}</span>
-                </div>
-              </button>
+              <Tooltip key={item.id}>
+                <TooltipTrigger asChild>
+                  <button
+                    className="group min-h-60 rounded-2xl bg-[#252529] p-4 text-left transition hover:bg-[#303035]"
+                    onClick={() => onSelectProject(item.id)}
+                    type="button"
+                  >
+                    <ProjectThumbnail
+                      className="h-36 transition group-hover:border-[#8b5cf6]/40"
+                      previewTree={item.previewTree}
+                    />
+                    <div className="mt-4 truncate text-base font-semibold text-white">
+                      {item.name}
+                    </div>
+                    <div className="mt-2 flex items-center justify-between text-sm text-gray-500">
+                      <span>{item.pagesCount} pages</span>
+                      <span>{new Date(item.updatedAt).toLocaleDateString()}</span>
+                    </div>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Open {item.name}</TooltipContent>
+              </Tooltip>
             ))}
           </div>
         </section>
       </main>
     </div>
+    </TooltipProvider>
   );
 }
 
@@ -1026,7 +1130,8 @@ function AuthPanel({
   const isSignup = authMode === "signup";
 
   return (
-    <div className="flex min-h-screen bg-[#0a0a0a] text-white">
+    <TooltipProvider>
+      <div className="flex min-h-screen bg-[#0a0a0a] text-white">
       <div className="flex flex-1 items-center justify-center px-6 py-10">
         <div className="w-full max-w-sm">
           <div className="mb-8 flex items-center gap-3">
@@ -1041,28 +1146,38 @@ function AuthPanel({
           </div>
 
           <div className="mb-5 grid grid-cols-2 rounded-md border border-[#2a2a2a] bg-[#141414] p-1">
-            <button
-              className={`rounded px-3 py-2 text-sm font-medium transition ${
-                !isSignup
-                  ? "bg-[#8b5cf6] text-white"
-                  : "text-gray-400 hover:text-white"
-              }`}
-              onClick={() => onModeChange("login")}
-              type="button"
-            >
-              Login
-            </button>
-            <button
-              className={`rounded px-3 py-2 text-sm font-medium transition ${
-                isSignup
-                  ? "bg-[#8b5cf6] text-white"
-                  : "text-gray-400 hover:text-white"
-              }`}
-              onClick={() => onModeChange("signup")}
-              type="button"
-            >
-              Sign up
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className={`rounded px-3 py-2 text-sm font-medium transition ${
+                    !isSignup
+                      ? "bg-[#8b5cf6] text-white"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                  onClick={() => onModeChange("login")}
+                  type="button"
+                >
+                  Login
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Switch to login</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className={`rounded px-3 py-2 text-sm font-medium transition ${
+                    isSignup
+                      ? "bg-[#8b5cf6] text-white"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                  onClick={() => onModeChange("signup")}
+                  type="button"
+                >
+                  Sign up
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Switch to sign up</TooltipContent>
+            </Tooltip>
           </div>
 
           <form className="space-y-4" onSubmit={onSubmit}>
@@ -1112,17 +1227,22 @@ function AuthPanel({
               </p>
             ) : null}
 
-            <button
-              className="w-full rounded-md bg-[#8b5cf6] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#7c3aed] disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isAuthenticating}
-              type="submit"
-            >
-              {isAuthenticating
-                ? "Authenticating..."
-                : isSignup
-                  ? "Create account"
-                  : "Login"}
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className="w-full rounded-md bg-[#8b5cf6] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#7c3aed] disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isAuthenticating}
+                  type="submit"
+                >
+                  {isAuthenticating
+                    ? "Authenticating..."
+                    : isSignup
+                      ? "Create account"
+                      : "Login"}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{isSignup ? "Create your account" : "Sign in to your account"}</TooltipContent>
+            </Tooltip>
           </form>
         </div>
       </div>
@@ -1140,6 +1260,7 @@ function AuthPanel({
         </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 }
 
@@ -1239,31 +1360,35 @@ function UserProjects({
       <div className="grid max-h-52 gap-2 overflow-y-auto">
         {projects.length > 0 ? (
           projects.map((item) => (
-            <button
-              className={`flex gap-3 rounded-md border p-2 text-left transition hover:border-[#8b5cf6] hover:bg-[#1b1b1b] ${
-                item.id === activeProjectId
-                  ? "border-[#8b5cf6] bg-[#1b1625]"
-                  : "border-[#2a2a2a] bg-[#151515]"
-              }`}
-              key={item.id}
-              onClick={() => onSelectProject(item.id)}
-              type="button"
-            >
-              <ProjectThumbnail
-                className="h-12 w-16 shrink-0 rounded-md"
-                previewTree={item.previewTree}
-                size="small"
-              />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium text-white">
-                  {item.name}
-                </div>
-                <div className="mt-2 flex items-center justify-between gap-2 text-xs text-gray-500">
-                  <span>{item.pagesCount} pages</span>
-                  <span>{new Date(item.updatedAt).toLocaleDateString()}</span>
-                </div>
-              </div>
-            </button>
+            <Tooltip key={item.id}>
+              <TooltipTrigger asChild>
+                <button
+                  className={`flex gap-3 rounded-md border p-2 text-left transition hover:border-[#8b5cf6] hover:bg-[#1b1b1b] ${
+                    item.id === activeProjectId
+                      ? "border-[#8b5cf6] bg-[#1b1625]"
+                      : "border-[#2a2a2a] bg-[#151515]"
+                  }`}
+                  onClick={() => onSelectProject(item.id)}
+                  type="button"
+                >
+                  <ProjectThumbnail
+                    className="h-12 w-16 shrink-0 rounded-md"
+                    previewTree={item.previewTree}
+                    size="small"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-white">
+                      {item.name}
+                    </div>
+                    <div className="mt-2 flex items-center justify-between gap-2 text-xs text-gray-500">
+                      <span>{item.pagesCount} pages</span>
+                      <span>{new Date(item.updatedAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Switch to {item.name}</TooltipContent>
+            </Tooltip>
           ))
         ) : (
           <div className="rounded-md border border-dashed border-[#2a2a2a] p-3 text-sm text-gray-500">
