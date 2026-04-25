@@ -47,6 +47,8 @@ export function EditorShell() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showChat, setShowChat] = useState(true);
   const [activeTab, setActiveTab] = useState<"design" | "advanced">("design");
+  const [projectTitle, setProjectTitle] = useState("Untitled Project");
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
 
   const selectedPage = useMemo(
     () => findPageById(project, selectedPageId),
@@ -143,7 +145,31 @@ export function EditorShell() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
             </svg>
           </div>
-          <span className="text-sm font-medium">Untitled Project</span>
+          {isEditingTitle ? (
+            <input
+              type="text"
+              value={projectTitle}
+              onChange={(e) => setProjectTitle(e.target.value)}
+              onBlur={() => setIsEditingTitle(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setIsEditingTitle(false);
+                }
+                if (e.key === "Escape") {
+                  setIsEditingTitle(false);
+                }
+              }}
+              autoFocus
+              className="rounded border border-[#8b5cf6] bg-[#141414] px-2 py-1 text-sm font-medium text-white outline-none"
+            />
+          ) : (
+            <button
+              onClick={() => setIsEditingTitle(true)}
+              className="rounded px-2 py-1 text-sm font-medium text-white transition hover:bg-[#1f1f1f]"
+            >
+              {projectTitle}
+            </button>
+          )}
           <span className="rounded bg-[#1f1f1f] px-2 py-0.5 text-xs text-gray-400">Autosaved</span>
         </div>
 
