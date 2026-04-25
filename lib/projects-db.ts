@@ -1,6 +1,7 @@
 import { ObjectId, type Collection } from "mongodb";
 import { sampleWebsiteProject } from "@/lib/sample-website-project";
 import { getDb } from "@/lib/mongodb";
+import type { UIElementNode } from "@/lib/ui-schema";
 import type { WebsiteProject } from "@/lib/website-project-schema";
 
 export type ProjectDocument = {
@@ -15,6 +16,7 @@ export type ProjectSummary = {
   id: string;
   name: string;
   pagesCount: number;
+  previewTree: UIElementNode | null;
   updatedAt: string;
 };
 
@@ -52,6 +54,7 @@ export function toProjectSummary(project: ProjectDocument): ProjectSummary {
     id: project._id.toString(),
     name: project.project.name,
     pagesCount: project.project.pages.length,
+    previewTree: project.project.pages[0]?.tree ?? null,
     updatedAt: project.updatedAt.toISOString(),
   };
 }

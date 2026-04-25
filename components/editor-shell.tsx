@@ -21,7 +21,7 @@ import { LayersPanel } from "@/components/layers-panel";
 import { PageListPanel } from "@/components/page-list-panel";
 import { demoPrompts } from "@/lib/demo-prompts";
 import { sampleWebsiteProject } from "@/lib/sample-website-project";
-import type { UIElementProps } from "@/lib/ui-schema";
+import type { UIElementNode, UIElementProps } from "@/lib/ui-schema";
 import { findNodeById } from "@/lib/ui-tree";
 import {
   addPageToProject,
@@ -52,6 +52,16 @@ const TldrawSiteCanvas = dynamic(
 );
 
 const ACTIVE_PROJECT_STORAGE_KEY = "designplate_active_project_id";
+const PROJECT_LOADING_MESSAGES = [
+  "Hold on, sprinkling pixels...",
+  "Wait a sec, shaping your idea...",
+  "Hold tight, your layout is waking up...",
+  "Almost ready, polishing the sparkle...",
+];
+
+function cx(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
 
 type AuthUser = {
   id: string;
@@ -63,6 +73,7 @@ type ProjectSummary = {
   id: string;
   name: string;
   pagesCount: number;
+  previewTree: UIElementNode | null;
   updatedAt: string;
 };
 
@@ -735,6 +746,23 @@ function DashboardHome({
   onSelectProject,
   projects,
 }: DashboardHomeProps) {
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  const loadingMessage =
+    PROJECT_LOADING_MESSAGES[loadingMessageIndex % PROJECT_LOADING_MESSAGES.length];
+
+  useEffect(() => {
+    if (!isCreatingProject) {
+      setLoadingMessageIndex(0);
+      return;
+    }
+
+    const messageTimer = window.setInterval(() => {
+      setLoadingMessageIndex((currentIndex) => currentIndex + 1);
+    }, 1800);
+
+    return () => window.clearInterval(messageTimer);
+  }, [isCreatingProject]);
+
   return (
     <div className="min-h-screen overflow-y-auto bg-black text-white">
       <header className="flex h-14 items-center justify-between border-b border-[#171717] px-6">
@@ -766,19 +794,9 @@ function DashboardHome({
           </p>
 
           <div className="mt-10 flex rounded-full border border-[#2a2a2a] bg-[#151519] p-1">
-            <button
-              className="rounded-full bg-[#46464f] px-7 py-3 text-sm font-semibold text-white"
-              type="button"
-            >
+            <span className="rounded-full bg-[#46464f] px-7 py-3 text-sm font-semibold text-white">
               Design on web
-            </button>
-            <button
-              className="flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold text-gray-400"
-              type="button"
-            >
-              Integrate with
-              <Sparkles className="h-4 w-4 text-[#8b5cf6]" />
-            </button>
+            </span>
           </div>
 
           <form
@@ -803,10 +821,6 @@ function DashboardHome({
                 <button className="transition hover:text-white" type="button">
                   <FileText className="h-5 w-5" />
                 </button>
-                <span className="flex items-center gap-2 text-sm font-medium">
-                  <Sparkles className="h-4 w-4 text-[#8b5cf6]" />
-                  Fast generate
-                </span>
               </div>
 
               <div className="flex items-center gap-4">
@@ -815,11 +829,20 @@ function DashboardHome({
                   Use Design System
                 </span>
                 <button
-                  className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-black transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  className={cx(
+                    "flex h-14 items-center justify-center rounded-full bg-white text-black transition hover:bg-gray-200 disabled:cursor-not-allowed",
+                    isCreatingProject
+                      ? "w-72 px-5 text-sm font-semibold"
+                      : "w-14 disabled:opacity-50",
+                  )}
                   disabled={!dashboardPrompt.trim() || isCreatingProject}
                   type="submit"
                 >
-                  <ArrowUp className="h-7 w-7" />
+                  {isCreatingProject ? (
+                    <span className="truncate">{loadingMessage}</span>
+                  ) : (
+                    <ArrowUp className="h-7 w-7" />
+                  )}
                 </button>
               </div>
             </div>
@@ -873,9 +896,10 @@ function DashboardHome({
                 onClick={() => onSelectProject(item.id)}
                 type="button"
               >
-                <div className="flex h-36 items-center justify-center rounded-xl bg-[#303036] transition group-hover:bg-[#3a3a42]">
-                  <PanelsTopLeft className="h-10 w-10 text-[#777782]" />
-                </div>
+                <ProjectThumbnail
+                  className="h-36 transition group-hover:border-[#8b5cf6]/40"
+                  previewTree={item.previewTree}
+                />
                 <div className="mt-4 truncate text-base font-semibold text-white">
                   {item.name}
                 </div>
@@ -1019,15 +1043,150 @@ function AuthPanel({
         </div>
       </div>
 
-      <div className="hidden flex-1 border-l border-[#2a2a2a] bg-[#111111] lg:flex lg:items-center lg:justify-center">
-        <div className="text-center">
-          <h1 className="text-5xl font-bold text-white">
-            Build <span className="text-[#8b5cf6]">beautiful</span> product with{" "}
-            <span className="text-[#8b5cf6]">simple</span> prompt
-          </h1>
+      <div className="hidden flex-1 border-l border-[var(--border-color)] bg-[var(--background)] p-10 lg:block">
+        <div className="flex h-full items-center justify-center">
+          <div className="max-w-xl text-center">
+            <h2 className="text-5xl font-bold leading-[1.04] text-white md:text-6xl">
+              <span className="block">Create your business</span>
+              <span className="mt-3 block bg-gradient-to-r from-white via-[#c4b5fd] to-[#8b5cf6] bg-clip-text text-transparent">
+                with simple prompt
+              </span>
+            </h2>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
+function StaticPreviewNode({ node }: { node: UIElementNode }) {
+  const className = cx(node.props.className, "pointer-events-none");
+  const children = node.children?.map((child) => (
+    <StaticPreviewNode key={child.id} node={child} />
+  ));
+
+  switch (node.type) {
+    case "section":
+      return <section className={className}>{children}</section>;
+    case "container":
+    case "stack":
+      return <div className={className}>{children}</div>;
+    case "card":
+      return <article className={className}>{children}</article>;
+    case "text":
+      return <p className={className}>{node.props.text}</p>;
+    case "button":
+      return <span className={className}>{node.props.text}</span>;
+    case "image":
+      return (
+        <span className={className}>
+          <img
+            alt={node.props.alt || ""}
+            className="block h-full w-full object-cover"
+            src={
+              node.props.src ||
+              "https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=1200&q=80"
+            }
+          />
+        </span>
+      );
+    default:
+      return null;
+  }
+}
+
+function ProjectThumbnail({
+  className,
+  previewTree,
+  size = "large",
+}: {
+  className?: string;
+  previewTree: UIElementNode | null;
+  size?: "large" | "small";
+}) {
+  const scaleClass = size === "large" ? "scale-[0.25]" : "scale-[0.075]";
+
+  return (
+    <div
+      className={cx(
+        "relative overflow-hidden rounded-xl border border-white/5 bg-[#303036]",
+        className,
+      )}
+    >
+      {previewTree ? (
+        <div
+          className={cx(
+            "absolute left-0 top-0 h-[760px] w-[1200px] origin-top-left bg-white text-black",
+            scaleClass,
+          )}
+        >
+          <StaticPreviewNode node={previewTree} />
+        </div>
+      ) : (
+        <div className="flex h-full items-center justify-center">
+          <PanelsTopLeft className="h-10 w-10 text-[#777782]" />
+        </div>
+      )}
+      <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/10" />
+    </div>
+  );
+}
+
+function UserProjects({
+  activeProjectId,
+  onSelectProject,
+  projects,
+}: {
+  activeProjectId: string | null;
+  onSelectProject: (projectId: string) => void;
+  projects: ProjectSummary[];
+}) {
+  return (
+    <div className="border-t border-[#2a2a2a] bg-[#101010] p-3">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-xs font-semibold uppercase text-gray-500">
+          Your projects
+        </h2>
+        <span className="rounded bg-[#1f1f1f] px-2 py-0.5 text-xs text-gray-500">
+          {projects.length}
+        </span>
+      </div>
+
+      <div className="grid max-h-52 gap-2 overflow-y-auto">
+        {projects.length > 0 ? (
+          projects.map((item) => (
+            <button
+              className={`flex gap-3 rounded-md border p-2 text-left transition hover:border-[#8b5cf6] hover:bg-[#1b1b1b] ${
+                item.id === activeProjectId
+                  ? "border-[#8b5cf6] bg-[#1b1625]"
+                  : "border-[#2a2a2a] bg-[#151515]"
+              }`}
+              key={item.id}
+              onClick={() => onSelectProject(item.id)}
+              type="button"
+            >
+              <ProjectThumbnail
+                className="h-12 w-16 shrink-0 rounded-md"
+                previewTree={item.previewTree}
+                size="small"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium text-white">
+                  {item.name}
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-2 text-xs text-gray-500">
+                  <span>{item.pagesCount} pages</span>
+                  <span>{new Date(item.updatedAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+            </button>
+          ))
+        ) : (
+          <div className="rounded-md border border-dashed border-[#2a2a2a] p-3 text-sm text-gray-500">
+            No projects yet.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
