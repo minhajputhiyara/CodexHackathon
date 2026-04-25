@@ -49,6 +49,16 @@ export function LayersPanel({
     return (
       <div key={node.id}>
         <div
+          onClick={() => {
+            if (hasChildren) {
+              toggleNode(node.id);
+            }
+            if (selectedPageId) {
+              onSelectElement(selectedPageId, node.id);
+            }
+          }}
+          onPointerEnter={() => onHoverElement?.(node.id)}
+          onPointerLeave={() => onHoverElement?.(null)}
           className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition ${
             isSelected
               ? "bg-[#8b5cf6] text-white"
@@ -59,13 +69,7 @@ export function LayersPanel({
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
         >
           {hasChildren ? (
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleNode(node.id);
-              }}
-              className="flex h-4 w-4 shrink-0 items-center justify-center rounded hover:bg-[#2a2a2a]"
-            >
+            <div className="flex h-4 w-4 shrink-0 items-center justify-center">
               <svg
                 className={`h-3 w-3 transition-transform ${isExpanded ? "rotate-0" : "-rotate-90"}`}
                 fill="none"
@@ -78,19 +82,12 @@ export function LayersPanel({
           ) : (
             <span className="w-4 shrink-0" />
           )}
-          <button
-            onClick={() => selectedPageId && onSelectElement(selectedPageId, node.id)}
-            onPointerEnter={() => onHoverElement?.(node.id)}
-            onPointerLeave={() => onHoverElement?.(null)}
-            className="flex flex-1 items-center gap-2 text-left"
-          >
-            <span className="flex-1 truncate">{node.type}</span>
-            {node.props?.text && (
-              <span className="truncate text-xs opacity-60">
-                {String(node.props.text).slice(0, 20)}
-              </span>
-            )}
-          </button>
+          <span className="flex-1 truncate">{node.type}</span>
+          {node.props?.text && (
+            <span className="truncate text-xs opacity-60">
+              {String(node.props.text).slice(0, 20)}
+            </span>
+          )}
         </div>
         {hasChildren && isExpanded &&
           node.children!.map((child) => renderNode(child, depth + 1))}
