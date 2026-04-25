@@ -4,6 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "designPlate - AI UI Builder",
   description: "AI-first UI canvas prototype",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({
