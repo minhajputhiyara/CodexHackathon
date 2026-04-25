@@ -509,7 +509,7 @@ export function EditorShell() {
       {/* Top Bar */}
       <div className="fixed left-0 right-0 top-0 z-50 flex h-12 items-center justify-between border-b border-[#2a2a2a] bg-[#0a0a0a] px-4">
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="designplate" className="h-8 w-8 rounded-md" />
+          <img src="/logo.png" alt="designplate" className="h-8 w-auto rounded-md" />
           <button
             onClick={() => setIsEditingTitle(true)}
             className="rounded px-2 py-1 text-lg font-bold transition hover:bg-[#1f1f1f]"
