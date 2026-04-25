@@ -18,7 +18,7 @@ export const sampleUiTree: UIElementNode = {
           id: "eyebrow",
           type: "text",
           props: {
-            text: "UIForge",
+            text: "designPlate",
             className: "text-sm font-semibold uppercase text-teal-700",
           },
         },

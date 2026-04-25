@@ -7,7 +7,7 @@ const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const MODEL = "gpt-4.1-mini";
 
 const instructions = `
-You generate JSON website projects for UIForge, an AI-native React and Tailwind UI canvas.
+You generate JSON website projects for designPlate, an AI-native React and Tailwind UI canvas.
 
 Return JSON only. Do not wrap the response in Markdown.
 

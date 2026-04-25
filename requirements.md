@@ -1,10 +1,10 @@
-# UIForge Requirements
+# designPlate Requirements
 
 ## Purpose
 
 This document defines what the hackathon prototype must prove, what is out of scope, and how the team will decide whether the product is working.
 
-UIForge is a proof-of-concept for AI-native UI creation:
+designPlate is a proof-of-concept for AI-native UI creation:
 
 Prompt -> Editable UI -> React + Tailwind code
 
@@ -200,7 +200,7 @@ The hackathon build is successful when:
 
 ## Demo Script
 
-1. Open UIForge.
+1. Open designPlate.
 2. Enter a prompt for a simple landing page.
 3. Generate UI.
 4. Select headline.
