@@ -103,20 +103,29 @@ export function updatePageById(
 
 function createUniquePageId(project: WebsiteProject, baseId: string) {
   const usedIds = new Set(project.pages.map((page) => page.id));
-  let index = 1;
-  let nextId = `${baseId}-copy`;
+  let index = 0;
+  let nextId = baseId;
 
   while (usedIds.has(nextId)) {
     index += 1;
-    nextId = `${baseId}-copy-${index}`;
+    nextId = `${baseId}-${index + 1}`;
   }
 
   return nextId;
 }
 
-function createUniqueRoute(project: WebsiteProject, route: string) {
+function createUniqueRoute(
+  project: WebsiteProject,
+  route: string,
+  suffix?: string,
+) {
   const usedRoutes = new Set(project.pages.map((page) => page.route));
-  const baseRoute = route === "/" ? "/copy" : `${route.replace(/\/$/, "")}-copy`;
+  const baseRoute =
+    suffix === undefined
+      ? route
+      : route === "/"
+        ? `/${suffix}`
+        : `${route.replace(/\/$/, "")}-${suffix}`;
   let index = 1;
   let nextRoute = baseRoute;
 
@@ -126,6 +135,71 @@ function createUniqueRoute(project: WebsiteProject, route: string) {
   }
 
   return nextRoute;
+}
+
+function createBlankPage(pageId: string, name: string, route: string): WebsitePage {
+  return {
+    id: pageId,
+    name,
+    route,
+    frame: layoutFrames(1)[0],
+    tree: {
+      id: `${pageId}-root`,
+      type: "section",
+      props: {
+        className: "min-h-screen bg-white px-8 py-16 text-slate-950",
+      },
+      children: [
+        {
+          id: `${pageId}-container`,
+          type: "container",
+          props: {
+            className: "mx-auto max-w-4xl",
+          },
+          children: [
+            {
+              id: `${pageId}-headline`,
+              type: "text",
+              props: {
+                text: name,
+                className: "text-4xl font-bold tracking-normal",
+              },
+            },
+            {
+              id: `${pageId}-body`,
+              type: "text",
+              props: {
+                text: "Start designing this page.",
+                className: "mt-4 text-base leading-7 text-slate-600",
+              },
+            },
+          ],
+        },
+      ],
+    },
+  };
+}
+
+export function addPageToProject(
+  project: WebsiteProject,
+): { project: WebsiteProject; pageId: string } {
+  const pageNumber = project.pages.length + 1;
+  const pageName = `Page ${pageNumber}`;
+  const pageId = createUniquePageId(project, slugify(pageName, `page-${pageNumber}`));
+  const route = createUniqueRoute(project, `/${pageId}`);
+  const frames = layoutFrames(project.pages.length + 1);
+  const nextPage = {
+    ...createBlankPage(pageId, pageName, route),
+    frame: frames[frames.length - 1],
+  };
+
+  return {
+    project: {
+      ...project,
+      pages: [...project.pages, nextPage],
+    },
+    pageId,
+  };
 }
 
 function cloneNodeWithFreshIds(node: UIElementNode, suffix: string): UIElementNode {
@@ -147,7 +221,7 @@ export function duplicatePageById(
   }
 
   const sourcePage = project.pages[pageIndex];
-  const nextPageId = createUniquePageId(project, sourcePage.id);
+  const nextPageId = createUniquePageId(project, `${sourcePage.id}-copy`);
   const suffix = nextPageId.replace(/[^a-z0-9-]/gi, "");
   const nextPage: WebsitePage = {
     ...sourcePage,

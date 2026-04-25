@@ -23,6 +23,7 @@ import { sampleWebsiteProject } from "@/lib/sample-website-project";
 import type { UIElementProps } from "@/lib/ui-schema";
 import { findNodeById } from "@/lib/ui-tree";
 import {
+  addPageToProject,
   deletePageById,
   duplicatePageById,
   findPageById,
@@ -375,6 +376,15 @@ export function EditorShell() {
     setSelectedElementId(null);
   };
 
+  const addPage = () => {
+    const result = addPageToProject(project);
+
+    setProject(result.project);
+    setSelectedPageId(result.pageId);
+    setSelectedElementId(null);
+    setHoveredElementId(null);
+  };
+
   const createProjectFromDashboardPrompt = async (
     event?: FormEvent<HTMLFormElement>,
   ) => {
@@ -611,6 +621,7 @@ export function EditorShell() {
           {/* Pages Bar */}
           <div className="border-t border-[#2a2a2a] p-2">
             <PageListPanel
+              onAddPage={addPage}
               onSelectPage={selectPage}
               project={project}
               selectedPageId={selectedPageId}

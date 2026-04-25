@@ -5,12 +5,14 @@ import type { WebsiteProject } from "@/lib/website-project-schema";
 type PageListPanelProps = {
   project: WebsiteProject;
   selectedPageId: string | null;
+  onAddPage: () => void;
   onSelectPage: (pageId: string) => void;
 };
 
 export function PageListPanel({
   project,
   selectedPageId,
+  onAddPage,
   onSelectPage,
 }: PageListPanelProps) {
   return (
@@ -33,7 +35,11 @@ export function PageListPanel({
           </button>
         );
       })}
-      <button className="shrink-0 rounded-md bg-[#141414] px-3 py-1.5 text-sm text-gray-400 transition hover:bg-[#1f1f1f] hover:text-white">
+      <button
+        className="shrink-0 rounded-md bg-[#141414] px-3 py-1.5 text-sm text-gray-400 transition hover:bg-[#1f1f1f] hover:text-white"
+        onClick={onAddPage}
+        type="button"
+      >
         + Add Page
       </button>
     </div>
