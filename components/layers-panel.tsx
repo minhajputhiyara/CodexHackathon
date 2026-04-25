@@ -1,34 +1,43 @@
 "use client";
 
-import type { UIElement } from "@/lib/ui-schema";
+import type { UIElementNode } from "@/lib/ui-schema";
 import type { WebsiteProject } from "@/lib/website-project-schema";
 
 interface LayersPanelProps {
   project: WebsiteProject;
   selectedPageId: string | null;
   selectedElementId: string | null;
+  hoveredElementId?: string | null;
   onSelectElement: (pageId: string, elementId: string) => void;
+  onHoverElement?: (elementId: string | null) => void;
 }
 
 export function LayersPanel({
   project,
   selectedPageId,
   selectedElementId,
+  hoveredElementId,
   onSelectElement,
+  onHoverElement,
 }: LayersPanelProps) {
   const selectedPage = project.pages.find((p) => p.id === selectedPageId);
 
-  const renderNode = (node: UIElement, depth = 0): React.ReactNode => {
+  const renderNode = (node: UIElementNode, depth = 0): React.ReactNode => {
     const isSelected = node.id === selectedElementId;
+    const isHovered = node.id === hoveredElementId;
     const hasChildren = node.children && node.children.length > 0;
 
     return (
       <div key={node.id}>
         <button
           onClick={() => selectedPageId && onSelectElement(selectedPageId, node.id)}
+          onPointerEnter={() => onHoverElement?.(node.id)}
+          onPointerLeave={() => onHoverElement?.(null)}
           className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition ${
             isSelected
               ? "bg-[#8b5cf6] text-white"
+              : isHovered
+                ? "bg-[#1f2937] text-white"
               : "text-gray-300 hover:bg-[#1f1f1f]"
           }`}
           style={{ paddingLeft: `${depth * 16 + 8}px` }}

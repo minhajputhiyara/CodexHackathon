@@ -11,7 +11,7 @@ interface Message {
 interface AIChatPanelProps {
   onGenerate: (prompt: string) => void;
   isGenerating: boolean;
-  demoPrompts: string[];
+  demoPrompts: readonly string[];
 }
 
 export function AIChatPanel({ onGenerate, isGenerating, demoPrompts }: AIChatPanelProps) {

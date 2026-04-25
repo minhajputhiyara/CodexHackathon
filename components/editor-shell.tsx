@@ -43,6 +43,7 @@ export function EditorShell() {
   const [selectedElementId, setSelectedElementId] = useState<string | null>(
     "home-headline",
   );
+  const [hoveredElementId, setHoveredElementId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showChat, setShowChat] = useState(true);
   const [activeTab, setActiveTab] = useState<"design" | "advanced">("design");
@@ -74,6 +75,7 @@ export function EditorShell() {
   const selectPage = (pageId: string) => {
     setSelectedPageId(pageId);
     setSelectedElementId(null);
+    setHoveredElementId(null);
   };
 
   const selectElement = (pageId: string, elementId: string) => {
@@ -176,6 +178,8 @@ export function EditorShell() {
         {/* Left Sidebar - Layers */}
         <div className="w-64 border-r border-[#2a2a2a]">
           <LayersPanel
+            hoveredElementId={hoveredElementId}
+            onHoverElement={setHoveredElementId}
             project={project}
             selectedPageId={selectedPageId}
             selectedElementId={selectedElementId}
@@ -216,6 +220,8 @@ export function EditorShell() {
                   updatePageFrame(currentProject, pageId, frame),
                 )
               }
+              hoveredElementId={hoveredElementId}
+              onHoverElement={setHoveredElementId}
               onSelectElement={selectElement}
               onSelectPage={selectPage}
               project={project}

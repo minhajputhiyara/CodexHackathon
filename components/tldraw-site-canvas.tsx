@@ -23,8 +23,10 @@ type TldrawSiteCanvasProps = {
   project: WebsiteProject;
   selectedPageId: string | null;
   selectedElementId: string | null;
+  hoveredElementId: string | null;
   onSelectPage: (pageId: string) => void;
   onSelectElement: (pageId: string, elementId: string) => void;
+  onHoverElement: (elementId: string | null) => void;
   onFrameChange: (pageId: string, frame: Partial<PageFrame>) => void;
 };
 
@@ -39,17 +41,23 @@ function isWebsitePageShape(shape: TLShape): shape is WebsitePageShape {
 function ProjectShapeSync({
   project,
   selectedPageId,
+  onSelectPage,
   onFrameChange,
 }: {
   project: WebsiteProject;
   selectedPageId: string | null;
+  onSelectPage: (pageId: string) => void;
   onFrameChange: (pageId: string, frame: Partial<PageFrame>) => void;
 }) {
   const editor = useEditor();
   const projectRef = useRef(project);
+  const selectedPageIdRef = useRef(selectedPageId);
+  const onSelectPageRef = useRef(onSelectPage);
   const onFrameChangeRef = useRef(onFrameChange);
 
   projectRef.current = project;
+  selectedPageIdRef.current = selectedPageId;
+  onSelectPageRef.current = onSelectPage;
   onFrameChangeRef.current = onFrameChange;
 
   useEffect(() => {
@@ -143,6 +151,24 @@ function ProjectShapeSync({
     );
   }, [editor]);
 
+  useEffect(() => {
+    return editor.store.listen(
+      () => {
+        const selectedPageShape = editor
+          .getSelectedShapes()
+          .find(isWebsitePageShape);
+
+        if (
+          selectedPageShape &&
+          selectedPageShape.props.pageId !== selectedPageIdRef.current
+        ) {
+          onSelectPageRef.current(selectedPageShape.props.pageId);
+        }
+      },
+      { source: "user", scope: "session" },
+    );
+  }, [editor]);
+
   return null;
 }
 
@@ -150,8 +176,10 @@ export function TldrawSiteCanvas({
   project,
   selectedPageId,
   selectedElementId,
+  hoveredElementId,
   onSelectPage,
   onSelectElement,
+  onHoverElement,
   onFrameChange,
 }: TldrawSiteCanvasProps) {
   const [editor, setEditor] = useState<Editor | null>(null);
@@ -159,12 +187,22 @@ export function TldrawSiteCanvas({
   const contextValue = useMemo(
     () => ({
       project,
+      hoveredElementId,
       selectedPageId,
       selectedElementId,
+      onHoverElement,
       onSelectPage,
       onSelectElement,
     }),
-    [project, selectedElementId, selectedPageId, onSelectElement, onSelectPage],
+    [
+      hoveredElementId,
+      onHoverElement,
+      onSelectElement,
+      onSelectPage,
+      project,
+      selectedElementId,
+      selectedPageId,
+    ],
   );
 
   useEffect(() => {
@@ -183,6 +221,7 @@ export function TldrawSiteCanvas({
         <Tldraw hideUi onMount={setEditor} shapeUtils={pageShapeUtils}>
           <ProjectShapeSync
             onFrameChange={onFrameChange}
+            onSelectPage={onSelectPage}
             project={project}
             selectedPageId={selectedPageId}
           />
