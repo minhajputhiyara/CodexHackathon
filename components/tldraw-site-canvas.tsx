@@ -29,6 +29,8 @@ type TldrawSiteCanvasProps = {
   onSelectPage: (pageId: string) => void;
   onSelectElement: (pageId: string, elementId: string) => void;
   onHoverElement: (elementId: string | null) => void;
+  onDuplicatePage: (pageId: string) => void;
+  onDeletePage: (pageId: string) => void;
   onFrameChange: (pageId: string, frame: Partial<PageFrame>) => void;
 };
 
@@ -123,6 +125,36 @@ function ProjectShapeSync({
   }, [editor, project, selectedPageId]);
 
   useEffect(() => {
+    if (!selectedPageId) {
+      return;
+    }
+
+    const selectedShapeId = shapeIdForPage(selectedPageId);
+
+    window.requestAnimationFrame(() => {
+      const selectedShape = editor.getShape<WebsitePageShape>(selectedShapeId);
+
+      if (!selectedShape) {
+        return;
+      }
+
+      editor.setSelectedShapes([selectedShapeId]);
+      editor.zoomToBounds(
+        {
+          x: selectedShape.x,
+          y: selectedShape.y,
+          w: selectedShape.props.width,
+          h: selectedShape.props.height,
+        },
+        {
+          animation: { duration: 220 },
+          inset: 72,
+        },
+      );
+    });
+  }, [editor, selectedPageId]);
+
+  useEffect(() => {
     return editor.store.listen(
       () => {
         const currentProject = projectRef.current;
@@ -182,30 +214,49 @@ export function TldrawSiteCanvas({
   onSelectPage,
   onSelectElement,
   onHoverElement,
+  onDuplicatePage,
+  onDeletePage,
   onFrameChange,
 }: TldrawSiteCanvasProps) {
   const [editor, setEditor] = useState<Editor | null>(null);
+  const [movablePageId, setMovablePageId] = useState<string | null>(null);
   const pageIdsKey = project.pages.map((page) => page.id).join("|");
   const contextValue = useMemo(
     () => ({
       project,
       hoveredElementId,
+      movablePageId,
       selectedPageId,
       selectedElementId,
       onHoverElement,
       onSelectPage,
       onSelectElement,
+      onDuplicatePage,
+      onDeletePage,
+      onTogglePageMove: (pageId: string) =>
+        setMovablePageId((currentPageId) =>
+          currentPageId === pageId ? null : pageId,
+        ),
     }),
     [
       hoveredElementId,
+      movablePageId,
       onHoverElement,
       onSelectElement,
       onSelectPage,
+      onDuplicatePage,
+      onDeletePage,
       project,
       selectedElementId,
       selectedPageId,
     ],
   );
+
+  useEffect(() => {
+    if (movablePageId && movablePageId !== selectedPageId) {
+      setMovablePageId(null);
+    }
+  }, [movablePageId, selectedPageId]);
 
   useEffect(() => {
     if (!editor) {

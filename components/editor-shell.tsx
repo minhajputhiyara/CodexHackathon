@@ -18,12 +18,13 @@ import { AIChatPanel } from "@/components/ai-chat-panel";
 import { ElementInspector } from "@/components/element-inspector";
 import { LayersPanel } from "@/components/layers-panel";
 import { PageListPanel } from "@/components/page-list-panel";
-import { addElementToPage } from "@/lib/add-element";
 import { demoPrompts } from "@/lib/demo-prompts";
 import { sampleWebsiteProject } from "@/lib/sample-website-project";
 import type { UIElementProps } from "@/lib/ui-schema";
 import { findNodeById } from "@/lib/ui-tree";
 import {
+  deletePageById,
+  duplicatePageById,
   findPageById,
   normalizeProject,
   updateNodePropsInPage,
@@ -358,17 +359,20 @@ export function EditorShell() {
     setSelectedElementId(elementId);
   };
 
-  const addElement = (elementType: string) => {
-    if (!selectedPageId) return;
+  const duplicatePage = (pageId: string) => {
+    const result = duplicatePageById(project, pageId);
 
-    const updatedProject = addElementToPage(
-      project,
-      selectedPageId,
-      elementType,
-      selectedElementId || undefined
-    );
+    setProject(result.project);
+    setSelectedPageId(result.pageId);
+    setSelectedElementId(null);
+  };
 
-    setProject(updatedProject);
+  const deletePage = (pageId: string) => {
+    const result = deletePageById(project, pageId);
+
+    setProject(result.project);
+    setSelectedPageId(result.pageId);
+    setSelectedElementId(null);
   };
 
   const createProjectFromDashboardPrompt = async (
@@ -531,7 +535,6 @@ export function EditorShell() {
             <span className="text-white">design</span>
             <span className="bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] bg-clip-text text-transparent">plate</span>
           </button>
-          <span className="rounded bg-[#1f1f1f] px-2 py-0.5 text-xs text-gray-400">Autosaved</span>
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#8b5cf6]">
             <PanelsTopLeft className="h-5 w-5 text-white" strokeWidth={2} />
           </div>
@@ -576,39 +579,15 @@ export function EditorShell() {
           <LayersPanel
             hoveredElementId={hoveredElementId}
             onHoverElement={setHoveredElementId}
-            project={project}
-            selectedPageId={selectedPageId}
-            selectedElementId={selectedElementId}
             onSelectElement={selectElement}
-            onAddElement={addElement}
+            project={project}
+            selectedElementId={selectedElementId}
+            selectedPageId={selectedPageId}
           />
         </div>
 
         {/* Center - Canvas */}
         <div className="flex flex-1 flex-col">
-          {/* Canvas Toolbar */}
-          <div className="flex items-center justify-center gap-2 border-b border-[#2a2a2a] py-2">
-            <button className="rounded p-1.5 hover:bg-[#1f1f1f]">
-              <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
-            <button className="rounded p-1.5 hover:bg-[#1f1f1f]">
-              <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </button>
-            <button className="rounded p-1.5 hover:bg-[#1f1f1f]">
-              <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-            <div className="mx-2 h-6 w-px bg-[#2a2a2a]"></div>
-            <button className="rounded bg-[#8b5cf6] px-3 py-1 text-xs font-medium">
-              Container
-            </button>
-          </div>
-
           {/* Canvas Area */}
           <div className="flex-1 overflow-hidden">
             <TldrawSiteCanvas
@@ -617,6 +596,8 @@ export function EditorShell() {
                   updatePageFrame(currentProject, pageId, frame),
                 )
               }
+              onDeletePage={deletePage}
+              onDuplicatePage={duplicatePage}
               hoveredElementId={hoveredElementId}
               onHoverElement={setHoveredElementId}
               onSelectElement={selectElement}
@@ -1040,54 +1021,3 @@ function AuthPanel({
   );
 }
 
-function UserProjects({
-  activeProjectId,
-  onSelectProject,
-  projects,
-}: {
-  activeProjectId: string | null;
-  onSelectProject: (projectId: string) => void;
-  projects: ProjectSummary[];
-}) {
-  return (
-    <div className="border-t border-[#2a2a2a] bg-[#101010] p-3">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-xs font-semibold uppercase text-gray-500">
-          Your projects
-        </h2>
-        <span className="rounded bg-[#1f1f1f] px-2 py-0.5 text-xs text-gray-500">
-          {projects.length}
-        </span>
-      </div>
-
-      <div className="grid max-h-52 gap-2 overflow-y-auto">
-        {projects.length > 0 ? (
-          projects.map((item) => (
-            <button
-              className={`rounded-md border p-3 text-left transition hover:border-[#8b5cf6] hover:bg-[#1b1b1b] ${
-                item.id === activeProjectId
-                  ? "border-[#8b5cf6] bg-[#1b1625]"
-                  : "border-[#2a2a2a] bg-[#151515]"
-              }`}
-              key={item.id}
-              onClick={() => onSelectProject(item.id)}
-              type="button"
-            >
-              <div className="truncate text-sm font-medium text-white">
-                {item.name}
-              </div>
-              <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-                <span>{item.pagesCount} pages</span>
-                <span>{new Date(item.updatedAt).toLocaleDateString()}</span>
-              </div>
-            </button>
-          ))
-        ) : (
-          <div className="rounded-md border border-dashed border-[#2a2a2a] p-3 text-sm text-gray-500">
-            No projects yet.
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}

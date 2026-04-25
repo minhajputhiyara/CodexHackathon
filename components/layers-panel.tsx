@@ -10,7 +10,6 @@ interface LayersPanelProps {
   hoveredElementId?: string | null;
   onSelectElement: (pageId: string, elementId: string) => void;
   onHoverElement?: (elementId: string | null) => void;
-  onAddElement?: (elementType: string) => void;
 }
 
 export function LayersPanel({
@@ -20,7 +19,6 @@ export function LayersPanel({
   hoveredElementId,
   onSelectElement,
   onHoverElement,
-  onAddElement,
 }: LayersPanelProps) {
   const selectedPage = project.pages.find((p) => p.id === selectedPageId);
 
@@ -69,9 +67,6 @@ export function LayersPanel({
         <button className="border-b-2 border-[#8b5cf6] px-4 py-3 text-sm font-medium text-white">
           Layers
         </button>
-        <button className="px-4 py-3 text-sm font-medium text-gray-400 hover:text-white">
-          Components
-        </button>
       </div>
 
       {/* Search */}
@@ -104,32 +99,6 @@ export function LayersPanel({
         )}
       </div>
 
-      {/* Components Section */}
-      <div className="border-t border-[#2a2a2a] p-3">
-        <div className="mb-2 text-xs font-medium text-gray-400">Basic</div>
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { name: "Div", type: "container" },
-            { name: "Text", type: "text" },
-            { name: "Image", type: "image" },
-            { name: "Button", type: "button" },
-            { name: "Input", type: "input" },
-            { name: "Icon", type: "icon" },
-          ].map((comp) => (
-            <button
-              key={comp.name}
-              onClick={() => onAddElement?.(comp.type)}
-              className="flex flex-col items-center gap-1 rounded-md border border-[#2a2a2a] bg-[#141414] p-2 transition hover:border-[#8b5cf6] hover:bg-[#1f1f1f]"
-              title={`Add ${comp.name}`}
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded bg-[#1f1f1f]">
-                <span className="text-xs text-gray-400">{comp.name[0]}</span>
-              </div>
-              <span className="text-xs text-gray-300">{comp.name}</span>
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

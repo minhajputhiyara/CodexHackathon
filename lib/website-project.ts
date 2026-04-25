@@ -1,4 +1,4 @@
-import type { UIElementProps } from "@/lib/ui-schema";
+import type { UIElementNode, UIElementProps } from "@/lib/ui-schema";
 import { assignMissingNodeIds, updateNodePropsById } from "@/lib/ui-tree";
 import type {
   PageFrame,
@@ -98,6 +98,107 @@ export function updatePageById(
           }
         : page,
     ),
+  };
+}
+
+function createUniquePageId(project: WebsiteProject, baseId: string) {
+  const usedIds = new Set(project.pages.map((page) => page.id));
+  let index = 1;
+  let nextId = `${baseId}-copy`;
+
+  while (usedIds.has(nextId)) {
+    index += 1;
+    nextId = `${baseId}-copy-${index}`;
+  }
+
+  return nextId;
+}
+
+function createUniqueRoute(project: WebsiteProject, route: string) {
+  const usedRoutes = new Set(project.pages.map((page) => page.route));
+  const baseRoute = route === "/" ? "/copy" : `${route.replace(/\/$/, "")}-copy`;
+  let index = 1;
+  let nextRoute = baseRoute;
+
+  while (usedRoutes.has(nextRoute)) {
+    index += 1;
+    nextRoute = `${baseRoute}-${index}`;
+  }
+
+  return nextRoute;
+}
+
+function cloneNodeWithFreshIds(node: UIElementNode, suffix: string): UIElementNode {
+  return {
+    ...node,
+    id: `${node.id}-${suffix}`,
+    children: node.children?.map((child) => cloneNodeWithFreshIds(child, suffix)),
+  };
+}
+
+export function duplicatePageById(
+  project: WebsiteProject,
+  pageId: string,
+): { project: WebsiteProject; pageId: string } {
+  const pageIndex = project.pages.findIndex((page) => page.id === pageId);
+
+  if (pageIndex === -1) {
+    return { project, pageId };
+  }
+
+  const sourcePage = project.pages[pageIndex];
+  const nextPageId = createUniquePageId(project, sourcePage.id);
+  const suffix = nextPageId.replace(/[^a-z0-9-]/gi, "");
+  const nextPage: WebsitePage = {
+    ...sourcePage,
+    id: nextPageId,
+    name: `${sourcePage.name} Copy`,
+    route: createUniqueRoute(project, sourcePage.route),
+    tree: cloneNodeWithFreshIds(sourcePage.tree, suffix),
+    frame: {
+      ...sourcePage.frame,
+      x: sourcePage.frame.x + 96,
+      y: sourcePage.frame.y + 96,
+    },
+  };
+
+  return {
+    project: {
+      ...project,
+      pages: [
+        ...project.pages.slice(0, pageIndex + 1),
+        nextPage,
+        ...project.pages.slice(pageIndex + 1),
+      ],
+    },
+    pageId: nextPageId,
+  };
+}
+
+export function deletePageById(
+  project: WebsiteProject,
+  pageId: string,
+): { project: WebsiteProject; pageId: string | null } {
+  if (project.pages.length <= 1) {
+    return { project, pageId };
+  }
+
+  const pageIndex = project.pages.findIndex((page) => page.id === pageId);
+
+  if (pageIndex === -1) {
+    return { project, pageId: project.pages[0]?.id ?? null };
+  }
+
+  const nextPages = project.pages.filter((page) => page.id !== pageId);
+  const nextSelectedPage =
+    nextPages[Math.min(pageIndex, nextPages.length - 1)] ?? nextPages[0] ?? null;
+
+  return {
+    project: {
+      ...project,
+      pages: nextPages,
+    },
+    pageId: nextSelectedPage?.id ?? null,
   };
 }
 
