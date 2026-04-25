@@ -698,6 +698,7 @@ export function EditorShell() {
                 </div>
 
                 <ElementInspector
+                  mode={activeTab}
                   onElementChange={updateSelectedNode}
                   onPageChange={(patch) => {
                     if (!selectedPageId) {

@@ -225,9 +225,10 @@ function WebsitePageShapeView({ shape }: { shape: WebsitePageShape }) {
                     </span>
                   </div>
                   <div
-                    className="overflow-hidden rounded-md border border-slate-300 bg-white shadow-sm"
+                    className="overflow-auto overscroll-contain rounded-md border border-slate-300 bg-white shadow-sm"
                     onClick={() => onSelectPage(page.id)}
                     onPointerDown={(event) => event.stopPropagation()}
+                    onWheel={(event) => event.stopPropagation()}
                     style={{
                       width: viewport.width,
                       height: viewport.height,
