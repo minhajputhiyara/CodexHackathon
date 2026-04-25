@@ -284,21 +284,21 @@ export function AIChatPanel({ onGenerate, isGenerating, demoPrompts }: AIChatPan
                             setSelectedModel(model.id);
                             setShowModelDropdown(false);
                           }}
-                          className={`flex w-full items-start gap-3 px-4 py-3 text-left transition hover:bg-[#252525] ${
+                          className={`flex w-full items-start gap-3 px-4 py-2 text-left transition hover:bg-[#252525] ${
                             selectedModel === model.id ? "bg-[#252525]" : ""
                           }`}
                         >
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
-                              <span className="font-semibold text-white">{model.name}</span>
+                              <span className="text-xs font-semibold text-white">{model.name}</span>
                               <span className="text-xs text-blue-400">{model.credit}</span>
                             </div>
-                            <p className="mt-1 text-xs leading-relaxed text-gray-400">
+                            <p className="mt-0.5 text-[11px] leading-relaxed text-gray-400">
                               {model.description}
                             </p>
                           </div>
                           {selectedModel === model.id && (
-                            <svg className="mt-1 h-4 w-4 shrink-0 text-[#8b5cf6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#8b5cf6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                           )}

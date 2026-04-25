@@ -52,3 +52,18 @@ button:disabled,
 [disabled] {
   cursor: not-allowed;
 }
+
+/* Reduce button padding globally */
+button {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+button.rounded-md,
+button.rounded {
+  padding: 0.375rem 0.75rem;
+}
+
+button.rounded-full {
+  padding: 0.25rem 0.5rem;
+}
