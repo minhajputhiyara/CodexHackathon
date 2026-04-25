@@ -25,19 +25,30 @@ export function LayersPanel({
   onHoverElement,
 }: LayersPanelProps) {
   const [activeTab, setActiveTab] = useState<"layers" | "source">("layers");
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const selectedPage = project.pages.find((p) => p.id === selectedPageId);
+
+  const toggleNode = (nodeId: string) => {
+    setExpandedNodes((prev) => {
+      const next = new Set(prev);
+      if (next.has(nodeId)) {
+        next.delete(nodeId);
+      } else {
+        next.add(nodeId);
+      }
+      return next;
+    });
+  };
 
   const renderNode = (node: UIElementNode, depth = 0): React.ReactNode => {
     const isSelected = node.id === selectedElementId;
     const isHovered = node.id === hoveredElementId;
     const hasChildren = node.children && node.children.length > 0;
+    const isExpanded = expandedNodes.has(node.id);
 
     return (
       <div key={node.id}>
-        <button
-          onClick={() => selectedPageId && onSelectElement(selectedPageId, node.id)}
-          onPointerEnter={() => onHoverElement?.(node.id)}
-          onPointerLeave={() => onHoverElement?.(null)}
+        <div
           className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition ${
             isSelected
               ? "bg-[#8b5cf6] text-white"
@@ -47,19 +58,41 @@ export function LayersPanel({
           }`}
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
         >
-          {hasChildren && (
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+          {hasChildren ? (
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleNode(node.id);
+              }}
+              className="flex h-4 w-4 shrink-0 items-center justify-center rounded hover:bg-[#2a2a2a]"
+            >
+              <svg
+                className={`h-3 w-3 transition-transform ${isExpanded ? "rotate-0" : "-rotate-90"}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          ) : (
+            <span className="w-4 shrink-0" />
           )}
-          <span className="flex-1 truncate">{node.type}</span>
-          {node.props?.text && (
-            <span className="truncate text-xs opacity-60">
-              {String(node.props.text).slice(0, 20)}
-            </span>
-          )}
-        </button>
-        {hasChildren &&
+          <button
+            onClick={() => selectedPageId && onSelectElement(selectedPageId, node.id)}
+            onPointerEnter={() => onHoverElement?.(node.id)}
+            onPointerLeave={() => onHoverElement?.(null)}
+            className="flex flex-1 items-center gap-2 text-left"
+          >
+            <span className="flex-1 truncate">{node.type}</span>
+            {node.props?.text && (
+              <span className="truncate text-xs opacity-60">
+                {String(node.props.text).slice(0, 20)}
+              </span>
+            )}
+          </button>
+        </div>
+        {hasChildren && isExpanded &&
           node.children!.map((child) => renderNode(child, depth + 1))}
       </div>
     );
