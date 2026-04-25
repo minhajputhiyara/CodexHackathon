@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { PanelsTopLeft } from "lucide-react";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { AIChatPanel } from "@/components/ai-chat-panel";
 import { ElementInspector } from "@/components/element-inspector";
 import { LayersPanel } from "@/components/layers-panel";
@@ -36,6 +36,8 @@ const TldrawSiteCanvas = dynamic(
   },
 );
 
+const ACTIVE_PROJECT_STORAGE_KEY = "designplate_active_project_id";
+
 type AuthUser = {
   id: string;
   email: string;
@@ -62,6 +64,11 @@ export function EditorShell() {
     password: "",
   });
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [isProjectHydrated, setIsProjectHydrated] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [project, setProject] = useState<WebsiteProject>(() =>
     normalizeProject(sampleWebsiteProject),
@@ -76,6 +83,7 @@ export function EditorShell() {
   const [activeTab, setActiveTab] = useState<"design" | "advanced">("design");
   const [projectTitle, setProjectTitle] = useState("Untitled Project");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const skipNextSaveRef = useRef(false);
 
   const selectedPage = useMemo(
     () => findPageById(project, selectedPageId),
@@ -91,11 +99,64 @@ export function EditorShell() {
 
     if (!response.ok) {
       setProjects([]);
-      return;
+      return [];
     }
 
     const data = (await response.json()) as { projects?: ProjectSummary[] };
-    setProjects(data.projects ?? []);
+    const nextProjects = data.projects ?? [];
+    setProjects(nextProjects);
+    return nextProjects;
+  };
+
+  const loadProject = async (projectId: string) => {
+    setIsProjectHydrated(false);
+
+    const response = await fetch(`/api/projects/${projectId}`);
+
+    if (!response.ok) {
+      setIsProjectHydrated(true);
+      return false;
+    }
+
+    const data = (await response.json()) as { project?: WebsiteProject };
+
+    if (!data.project) {
+      setIsProjectHydrated(true);
+      return false;
+    }
+
+    const nextProject = normalizeProject(data.project);
+    skipNextSaveRef.current = true;
+    setProject(nextProject);
+    setProjectTitle(nextProject.name);
+    setSelectedPageId(nextProject.pages[0]?.id ?? null);
+    setSelectedElementId(null);
+    setActiveProjectId(projectId);
+    setSaveStatus("saved");
+    setIsProjectHydrated(true);
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(ACTIVE_PROJECT_STORAGE_KEY, projectId);
+    }
+
+    return true;
+  };
+
+  const hydrateWorkspace = async () => {
+    const nextProjects = await loadProjects();
+    const storedProjectId =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem(ACTIVE_PROJECT_STORAGE_KEY)
+        : null;
+    const nextProjectId =
+      nextProjects.find((item) => item.id === storedProjectId)?.id ??
+      nextProjects[0]?.id;
+
+    if (nextProjectId) {
+      await loadProject(nextProjectId);
+    } else {
+      setIsProjectHydrated(true);
+    }
   };
 
   useEffect(() => {
@@ -113,7 +174,7 @@ export function EditorShell() {
         if (response.ok && data.user) {
           setAuthUser(data.user);
           setAuthStatus("authenticated");
-          await loadProjects();
+          await hydrateWorkspace();
         } else {
           setAuthStatus("unauthenticated");
         }
@@ -157,7 +218,7 @@ export function EditorShell() {
       setAuthUser(data.user);
       setAuthStatus("authenticated");
       setAuthForm({ email: "", name: "", password: "" });
-      await loadProjects();
+      await hydrateWorkspace();
     } catch {
       setAuthError("Could not reach the authentication server.");
     } finally {
@@ -169,8 +230,58 @@ export function EditorShell() {
     await fetch("/api/auth/logout", { method: "POST" });
     setAuthUser(null);
     setProjects([]);
+    setActiveProjectId(null);
+    setIsProjectHydrated(false);
     setAuthStatus("unauthenticated");
   };
+
+  useEffect(() => {
+    if (
+      authStatus !== "authenticated" ||
+      !activeProjectId ||
+      !isProjectHydrated
+    ) {
+      return;
+    }
+
+    if (skipNextSaveRef.current) {
+      skipNextSaveRef.current = false;
+      return;
+    }
+
+    setSaveStatus("saving");
+
+    const saveTimer = window.setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/projects/${activeProjectId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ project }),
+        });
+
+        if (!response.ok) {
+          setSaveStatus("error");
+          return;
+        }
+
+        const data = (await response.json()) as {
+          summary?: ProjectSummary;
+        };
+        setSaveStatus("saved");
+        setProjects((currentProjects) =>
+          currentProjects.map((item) =>
+            item.id === activeProjectId && data.summary ? data.summary : item,
+          ),
+        );
+      } catch {
+        setSaveStatus("error");
+      }
+    }, 700);
+
+    return () => window.clearTimeout(saveTimer);
+  }, [activeProjectId, authStatus, isProjectHydrated, project]);
 
   const updateSelectedNode = (props: Partial<UIElementProps>) => {
     if (!selectedPageId || !selectedElementId) {
@@ -287,6 +398,17 @@ export function EditorShell() {
             <span className="bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] bg-clip-text text-transparent">plate</span>
           </button>
           <span className="rounded bg-[#1f1f1f] px-2 py-0.5 text-xs text-gray-400">Autosaved</span>
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#8b5cf6]">
+            <PanelsTopLeft className="h-5 w-5 text-white" strokeWidth={2} />
+          </div>
+          <span className="text-sm font-medium">{project.name}</span>
+          <span className="rounded bg-[#1f1f1f] px-2 py-0.5 text-xs text-gray-400">
+            {saveStatus === "saving"
+              ? "Saving..."
+              : saveStatus === "error"
+                ? "Save failed"
+                : "Autosaved"}
+          </span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -336,7 +458,11 @@ export function EditorShell() {
               onSelectElement={selectElement}
             />
           </div>
-          <UserProjects projects={projects} />
+          <UserProjects
+            activeProjectId={activeProjectId}
+            onSelectProject={loadProject}
+            projects={projects}
+          />
         </div>
 
         {/* Center - Canvas */}
@@ -636,7 +762,15 @@ function AuthPanel({
   );
 }
 
-function UserProjects({ projects }: { projects: ProjectSummary[] }) {
+function UserProjects({
+  activeProjectId,
+  onSelectProject,
+  projects,
+}: {
+  activeProjectId: string | null;
+  onSelectProject: (projectId: string) => void;
+  projects: ProjectSummary[];
+}) {
   return (
     <div className="border-t border-[#2a2a2a] bg-[#101010] p-3">
       <div className="mb-3 flex items-center justify-between">
@@ -652,8 +786,13 @@ function UserProjects({ projects }: { projects: ProjectSummary[] }) {
         {projects.length > 0 ? (
           projects.map((item) => (
             <button
-              className="rounded-md border border-[#2a2a2a] bg-[#151515] p-3 text-left transition hover:border-[#8b5cf6] hover:bg-[#1b1b1b]"
+              className={`rounded-md border p-3 text-left transition hover:border-[#8b5cf6] hover:bg-[#1b1b1b] ${
+                item.id === activeProjectId
+                  ? "border-[#8b5cf6] bg-[#1b1625]"
+                  : "border-[#2a2a2a] bg-[#151515]"
+              }`}
               key={item.id}
+              onClick={() => onSelectProject(item.id)}
               type="button"
             >
               <div className="truncate text-sm font-medium text-white">
