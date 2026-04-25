@@ -6,9 +6,9 @@ import type {
   WebsiteProject,
 } from "@/lib/website-project-schema";
 
-const FRAME_WIDTH = 1440;
-const FRAME_HEIGHT = 1200;
-const FRAME_GAP = 240;
+const FRAME_WIDTH = 2694;
+const FRAME_HEIGHT = 1164;
+const FRAME_GAP = 320;
 
 function slugify(value: string, fallback: string) {
   const slug = value
@@ -21,7 +21,7 @@ function slugify(value: string, fallback: string) {
 }
 
 export function layoutFrames(pageCount: number): PageFrame[] {
-  const columns = pageCount <= 4 ? 2 : 3;
+  const columns = pageCount <= 2 ? pageCount : 2;
 
   return Array.from({ length: pageCount }, (_, index) => ({
     x: (index % columns) * (FRAME_WIDTH + FRAME_GAP),
@@ -54,12 +54,19 @@ export function normalizeProject(project: WebsiteProject): WebsiteProject {
 
       usedRoutes.add(route);
 
+      const frame =
+        !page.frame ||
+        page.frame.width < FRAME_WIDTH ||
+        page.frame.height < FRAME_HEIGHT
+          ? frames[index]
+          : page.frame;
+
       return {
         id,
         name,
         route,
         tree: assignMissingNodeIds(page.tree),
-        frame: page.frame ?? frames[index],
+        frame,
       };
     }),
   };
@@ -141,4 +148,3 @@ export function updatePageFrame(
     ),
   };
 }
-

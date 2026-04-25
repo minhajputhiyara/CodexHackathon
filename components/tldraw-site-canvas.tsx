@@ -10,6 +10,8 @@ import {
   type TLShapeId,
 } from "tldraw";
 import {
+  PAGE_VIEWPORT_GROUP_HEIGHT,
+  PAGE_VIEWPORT_GROUP_WIDTH,
   WEBSITE_PAGE_SHAPE_TYPE,
   WebsitePageCanvasContext,
   WebsitePageShapeUtil,
@@ -90,8 +92,8 @@ function ProjectShapeSync({
           pageId: page.id,
           name: page.name,
           route: page.route,
-          width: page.frame.width,
-          height: page.frame.height,
+          width: PAGE_VIEWPORT_GROUP_WIDTH,
+          height: PAGE_VIEWPORT_GROUP_HEIGHT,
         },
       };
 
@@ -217,7 +219,7 @@ export function TldrawSiteCanvas({
 
   return (
     <WebsitePageCanvasContext.Provider value={contextValue}>
-      <section className="relative h-[760px] overflow-hidden rounded-md border border-slate-200 bg-white">
+      <section className="relative h-full min-h-[calc(100vh-132px)] overflow-hidden rounded-md border border-slate-200 bg-white">
         <Tldraw hideUi onMount={setEditor} shapeUtils={pageShapeUtils}>
           <ProjectShapeSync
             onFrameChange={onFrameChange}
